@@ -4,11 +4,9 @@ A curated collection of production-ready workflow examples demonstrating various
 
 ## Overview
 
-These examples demonstrate how to build robust, scalable workflows using Render's Python SDK. All examples follow best practices for production deployments and include comprehensive documentation.
+These examples demonstrate how to build robust, scalable workflows using Render's SDK. Each example is available in both **Python** and **TypeScript**, with implementations side by side in `python/` and `typescript/` subdirectories. All examples follow best practices for production deployments and include comprehensive documentation.
 
-**Important Notes:**
-- **Python-only**: Render Workflows are currently only supported in Python via `render-sdk`
-- **Service Type**: All workflow services must be deployed as Workflow services on Render
+**Service type**: All workflow services must be deployed as Workflow services on Render.
 
 ## Examples
 

@@ -33,64 +33,63 @@ process_file_batch (orchestrator)
 generate_consolidated_report (final aggregation)
 ```
 
-## Local Development
+## Local development
 
 ### Prerequisites
-- Python 3.10+
 
-### Setup and Run
+- Python 3.10+ (for the Python version)
+- Node.js 18+ (for the TypeScript version)
+
+### Python
 
 ```bash
-# Navigate to example directory
-cd file-processing
-
-# Install dependencies
+cd file-processing/python
 pip install -r requirements.txt
-
-# Run the workflow service
 python main.py
+```
+
+### TypeScript
+
+```bash
+cd file-processing/typescript
+npm install
+npm run dev
 ```
 
 ## Deploying to Render
 
-### Service Configuration
+### Service configuration
 
-**Service Type**: Workflow
+**Service type**: Workflow
 
-**Build Command**:
-```bash
-cd file-processing && pip install -r requirements.txt
-```
+**Python:**
 
-**Start Command**:
-```bash
-cd file-processing && python main.py
-```
+| Setting | Value |
+|---|---|
+| Build command | `cd file-processing/python && pip install -r requirements.txt` |
+| Start command | `cd file-processing/python && python main.py` |
 
-### Environment Variables
+**TypeScript:**
 
-Required:
-- `RENDER_API_KEY` - Your Render API key (from Render dashboard)
+| Setting | Value |
+|---|---|
+| Build command | `cd file-processing/typescript && npm install && npm run build` |
+| Start command | `cd file-processing/typescript && npm start` |
 
-### Deployment Steps
+### Environment variables
 
-1. **Create Workflow Service**
-   - Go to Render Dashboard
-   - Click "New +" → "Workflow"
-   - Connect your repository
-   - Name: `file-processing-workflows`
+| Variable | Description |
+|---|---|
+| `RENDER_API_KEY` | Your Render API key (from Render Dashboard) |
 
-2. **Configure Build Settings**
-   - Build Command: `cd file-processing && pip install -r requirements.txt`
-   - Start Command: `cd file-processing && python main.py`
+### Deployment steps
 
-3. **Set Environment Variables**
-   - Add `RENDER_API_KEY` in the Environment section
-   - Get API key from: Render Dashboard → Account Settings → API Keys
-
-4. **Deploy**
-   - Click "Create Workflow"
-   - Render will build and start your workflow service
+1. Go to Render Dashboard.
+1. Click **New +** > **Workflow**.
+1. Connect your repository.
+1. Set the build and start commands for your chosen language.
+1. Add `RENDER_API_KEY` in the Environment section.
+1. Click **Create Workflow**.
 
 ## Testing in Render Dashboard
 
@@ -325,10 +324,8 @@ async def export_to_database(report: dict) -> dict:
 3. **Memory Management**: For large files, consider streaming or chunked processing
 4. **Error Isolation**: One file failure shouldn't stop the entire batch
 
-## Important Notes
+## Important notes
 
-- **Python-only**: Workflows are only supported in Python via render-sdk
-- **No Blueprint Support**: Workflows don't support render.yaml blueprint configuration
-- **File Access**: In production, integrate with cloud storage (S3, GCS) or databases
-- **Retry Logic**: All read operations include retry configuration for transient failures
-- **Local Paths**: Sample uses local paths; adapt for your storage solution
+- **File access**: In production, integrate with cloud storage (S3, GCS) or databases.
+- **Retry logic**: All read operations include retry configuration for transient failures.
+- **Local paths**: Sample uses local paths; adapt for your storage solution.

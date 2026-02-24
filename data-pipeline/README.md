@@ -45,67 +45,63 @@ run_data_pipeline (orchestrator)
      └── aggregate_insights
 ```
 
-## Local Development
+## Local development
 
 ### Prerequisites
-- Python 3.10+
 
-### Setup and Run
+- Python 3.10+ (for the Python version)
+- Node.js 18+ (for the TypeScript version)
+
+### Python
 
 ```bash
-# Navigate to example directory
-cd data-pipeline
-
-# Install dependencies
+cd data-pipeline/python
 pip install -r requirements.txt
-
-# Run the workflow service
 python main.py
+```
+
+### TypeScript
+
+```bash
+cd data-pipeline/typescript
+npm install
+npm run dev
 ```
 
 ## Deploying to Render
 
-### Service Configuration
+### Service configuration
 
-**Service Type**: Workflow
+**Service type**: Workflow
 
-**Build Command**:
-```bash
-cd data-pipeline && pip install -r requirements.txt
-```
+**Python:**
 
-**Start Command**:
-```bash
-cd data-pipeline && python main.py
-```
+| Setting | Value |
+|---|---|
+| Build command | `cd data-pipeline/python && pip install -r requirements.txt` |
+| Start command | `cd data-pipeline/python && python main.py` |
 
-### Environment Variables
+**TypeScript:**
 
-Required:
-- `RENDER_API_KEY` - Your Render API key (from Render dashboard)
+| Setting | Value |
+|---|---|
+| Build command | `cd data-pipeline/typescript && npm install && npm run build` |
+| Start command | `cd data-pipeline/typescript && npm start` |
 
-Optional (if using real APIs):
-- Any API keys for external services you integrate
+### Environment variables
 
-### Deployment Steps
+| Variable | Description |
+|---|---|
+| `RENDER_API_KEY` | Your Render API key (from Render Dashboard) |
 
-1. **Create Workflow Service**
-   - Go to Render Dashboard
-   - Click "New +" → "Workflow"
-   - Connect your repository
-   - Name: `data-pipeline-workflows`
+### Deployment steps
 
-2. **Configure Build Settings**
-   - Build Command: `cd data-pipeline && pip install -r requirements.txt`
-   - Start Command: `cd data-pipeline && python main.py`
-
-3. **Set Environment Variables**
-   - Add `RENDER_API_KEY` in the Environment section
-   - Get API key from: Render Dashboard → Account Settings → API Keys
-
-4. **Deploy**
-   - Click "Create Workflow"
-   - Render will build and start your workflow service
+1. Go to Render Dashboard.
+1. Click **New +** > **Workflow**.
+1. Connect your repository.
+1. Set the build and start commands for your chosen language.
+1. Add `RENDER_API_KEY` in the Environment section.
+1. Click **Create Workflow**.
 
 ## Testing in Render Dashboard
 
@@ -373,11 +369,9 @@ async def send_pipeline_notification(result: dict) -> dict:
 4. **Timeout Settings**: HTTP client configured with 30s timeout
 5. **Error Isolation**: One source failure doesn't block others
 
-## Important Notes
+## Important notes
 
-- **Python-only**: Workflows are only supported in Python via render-sdk
-- **No Blueprint Support**: Workflows don't support render.yaml blueprint configuration
-- **Mock Data**: Example uses simulated data; replace with real API calls in production
-- **Idempotency**: Design pipeline to be safely re-runnable
-- **Monitoring**: Add logging and metrics for production deployments
-- **Cost**: Consider API rate limits and costs for external services
+- **Mock data**: This example uses simulated data. Replace with real API calls in production.
+- **Idempotency**: Design pipeline to be safely re-runnable.
+- **Monitoring**: Add logging and metrics for production deployments.
+- **Cost**: Consider API rate limits and costs for external services.

@@ -39,71 +39,67 @@ multi_turn_conversation (orchestrator)
           └── search_knowledge_base
 ```
 
-## Local Development
+## Local development
 
 ### Prerequisites
-- Python 3.10+
+
+- Python 3.10+ (for the Python version)
+- Node.js 18+ (for the TypeScript version)
 - OpenAI API key
 
-### Setup and Run
+### Python
 
 ```bash
-# Navigate to example directory
-cd openai-agent
-
-# Install dependencies
+cd openai-agent/python
 pip install -r requirements.txt
-
-# Set OpenAI API key
-export OPENAI_API_KEY="your-openai-api-key"
-
-# Run the workflow service
+cp .env.example .env  # then edit .env with your keys
 python main.py
+```
+
+### TypeScript
+
+```bash
+cd openai-agent/typescript
+npm install
+cp .env.example .env  # then edit .env with your keys
+npm run dev
 ```
 
 ## Deploying to Render
 
-### Service Configuration
+### Service configuration
 
-**Service Type**: Workflow
+**Service type**: Workflow
 
-**Build Command**:
-```bash
-cd openai-agent && pip install -r requirements.txt
-```
+**Python:**
 
-**Start Command**:
-```bash
-cd openai-agent && python main.py
-```
+| Setting | Value |
+|---|---|
+| Build command | `cd openai-agent/python && pip install -r requirements.txt` |
+| Start command | `cd openai-agent/python && python main.py` |
 
-### Environment Variables
+**TypeScript:**
 
-Required:
-- `RENDER_API_KEY` - Your Render API key (from Render dashboard)
-- `OPENAI_API_KEY` - Your OpenAI API key (from OpenAI platform)
+| Setting | Value |
+|---|---|
+| Build command | `cd openai-agent/typescript && npm install && npm run build` |
+| Start command | `cd openai-agent/typescript && npm start` |
 
-### Deployment Steps
+### Environment variables
 
-1. **Create Workflow Service**
-   - Go to Render Dashboard
-   - Click "New +" → "Workflow"
-   - Connect your repository
-   - Name: `openai-agent-workflows`
+| Variable | Description |
+|---|---|
+| `RENDER_API_KEY` | Your Render API key (from Render Dashboard) |
+| `OPENAI_API_KEY` | Your OpenAI API key (from [OpenAI platform](https://platform.openai.com/api-keys)) |
 
-2. **Configure Build Settings**
-   - Build Command: `cd openai-agent && pip install -r requirements.txt`
-   - Start Command: `cd openai-agent && python main.py`
+### Deployment steps
 
-3. **Set Environment Variables**
-   - Add `RENDER_API_KEY` in the Environment section
-   - Add `OPENAI_API_KEY` in the Environment section
-   - Get Render API key from: Render Dashboard → Account Settings → API Keys
-   - Get OpenAI API key from: https://platform.openai.com/api-keys
-
-4. **Deploy**
-   - Click "Create Workflow"
-   - Render will build and start your workflow service
+1. Go to Render Dashboard.
+1. Click **New +** > **Workflow**.
+1. Connect your repository.
+1. Set the build and start commands for your chosen language.
+1. Add `RENDER_API_KEY` and `OPENAI_API_KEY` in the Environment section.
+1. Click **Create Workflow**.
 
 ## Testing in Render Dashboard
 
@@ -370,11 +366,9 @@ User: "What is your shipping policy?"
 Agent: "We offer free shipping on orders over $50. Standard shipping takes 3-5 business days, and express shipping is available for $15 with delivery in 1-2 business days."
 ```
 
-## Important Notes
+## Important notes
 
-- **Python-only**: Workflows are only supported in Python via render-sdk
-- **No Blueprint Support**: Workflows don't support render.yaml blueprint configuration
-- **OpenAI Costs**: Be mindful of API costs when running the agent frequently
-- **Model Selection**: Currently uses GPT-4; can be changed to GPT-3.5-turbo for cost savings
-- **Tool Safety**: In production, add authorization checks before executing sensitive tools
-- **Rate Limiting**: Consider implementing rate limits for production deployments
+- **OpenAI costs**: Be mindful of API costs when running the agent frequently.
+- **Model selection**: Currently uses GPT-4; can be changed to GPT-3.5-turbo for cost savings.
+- **Tool safety**: In production, add authorization checks before executing sensitive tools.
+- **Rate limiting**: Consider implementing rate limits for production deployments.

@@ -121,20 +121,30 @@ task_id = get_task_identifier("analyze_file")
 # Result: "file-analyzer-workflows/analyze_file"
 ```
 
-## Project Structure
+## Project structure
 
 ```
 file-analyzer/
-├── README.md                           # This file
-├── workflow-service/                   # Task SDK - Defines tasks
-│   ├── requirements.txt               # Python dependencies
-│   ├── main.py                        # Task definitions
-│   └── sample_files/
-│       ├── sales_data.csv             # Sample sales data
-│       └── customer_data.csv          # Sample customer data
-└── api-service/                        # Client SDK - Calls tasks
-    ├── requirements.txt               # Python dependencies
-    └── main.py                        # FastAPI endpoints
+├── README.md
+├── sample_files/                       # Shared sample data
+│   ├── sales_data.csv
+│   └── customer_data.csv
+├── python/
+│   ├── api-service/                    # Client SDK - FastAPI
+│   │   ├── main.py
+│   │   └── requirements.txt
+│   └── workflow-service/               # Task SDK - Workflows
+│       ├── main.py
+│       └── requirements.txt
+└── typescript/
+    ├── api-service/                    # Client SDK - Express
+    │   ├── src/main.ts
+    │   ├── package.json
+    │   └── tsconfig.json
+    └── workflow-service/               # Task SDK - Workflows
+        ├── src/main.ts
+        ├── package.json
+        └── tsconfig.json
 ```
 
 ## Workflow Service (Task SDK)
@@ -228,45 +238,54 @@ print(result.status)    # Task status (e.g., "SUCCEEDED")
 print(result.results)   # Task return value
 ```
 
-## Local Development
+## Local development
 
 ### Prerequisites
 
-- Python 3.10+
+- Python 3.10+ (for the Python version)
+- Node.js 18+ (for the TypeScript version)
 - Render API key
 
-### Running the Workflow Service
+### Running the workflow service
+
+**Python:**
 
 ```bash
-# Navigate to workflow service
-cd file-analyzer/workflow-service
-
-# Install dependencies
+cd file-analyzer/python/workflow-service
 pip install -r requirements.txt
-
-# Run the service
 python main.py
 ```
 
-The service will start and register all tasks. Keep this running.
+**TypeScript:**
 
-### Running the API Service
+```bash
+cd file-analyzer/typescript/workflow-service
+npm install
+npm run dev
+```
+
+Keep this running.
+
+### Running the API service
 
 In a separate terminal:
 
+**Python:**
+
 ```bash
-# Navigate to API service
-cd file-analyzer/api-service
-
-# Install dependencies
+cd file-analyzer/python/api-service
 pip install -r requirements.txt
-
-# Set environment variables
-export RENDER_API_KEY="your_render_api_key"
-export WORKFLOW_SERVICE_SLUG="local"  # For local development
-
-# Run the service
+cp .env.example .env  # then edit .env with your keys
 uvicorn main:app --host 0.0.0.0 --port 8000
+```
+
+**TypeScript:**
+
+```bash
+cd file-analyzer/typescript/api-service
+npm install
+cp .env.example .env  # then edit .env with your keys
+npm run dev
 ```
 
 ### Testing Locally
@@ -275,7 +294,7 @@ uvicorn main:app --host 0.0.0.0 --port 8000
 
 ```bash
 curl -X POST "http://localhost:8000/analyze" \
-  -F "file=@workflow-service/sample_files/sales_data.csv"
+  -F "file=@sample_files/sales_data.csv"
 ```
 
 **Using Python:**
@@ -283,7 +302,7 @@ curl -X POST "http://localhost:8000/analyze" \
 ```python
 import requests
 
-with open('workflow-service/sample_files/sales_data.csv', 'rb') as f:
+with open('sample_files/sales_data.csv', 'rb') as f:
     response = requests.post(
         'http://localhost:8000/analyze',
         files={'file': f}
@@ -299,32 +318,40 @@ curl http://localhost:8000/health
 
 ## Deploying to Render
 
-### Step 1: Deploy Workflow Service
+### Step 1: Deploy workflow service
 
-**Service Type**: Workflow
+**Service type**: Workflow
 
-**Configuration:**
-- **Name**: `file-analyzer-workflows` (this becomes your slug!)
-- **Build Command**:
-  ```bash
-  cd file-analyzer/workflow-service && pip install -r requirements.txt
-  ```
-- **Start Command**:
-  ```bash
-  cd file-analyzer/workflow-service && python main.py
-  ```
+**Python:**
 
-**Environment Variables:**
-- `RENDER_API_KEY` - Your Render API key (from Account Settings → API Keys)
+| Setting | Value |
+|---|---|
+| Name | `file-analyzer-workflows` (this becomes your slug) |
+| Build command | `cd file-analyzer/python/workflow-service && pip install -r requirements.txt` |
+| Start command | `cd file-analyzer/python/workflow-service && python main.py` |
 
-**Deployment Steps:**
-1. Go to Render Dashboard
-2. Click **"New +"** → **"Workflow"**
-3. Connect your repository
-4. Configure as above
-5. Click **"Create Workflow"**
+**TypeScript:**
 
-**Important:** Note the service slug (usually the service name in lowercase with hyphens). You'll need this for the API service.
+| Setting | Value |
+|---|---|
+| Name | `file-analyzer-workflows` (this becomes your slug) |
+| Build command | `cd file-analyzer/typescript/workflow-service && npm install && npm run build` |
+| Start command | `cd file-analyzer/typescript/workflow-service && npm start` |
+
+**Environment variables:**
+
+| Variable | Description |
+|---|---|
+| `RENDER_API_KEY` | Your Render API key (from Account Settings > API Keys) |
+
+**Deployment steps:**
+
+1. Go to Render Dashboard.
+1. Click **New +** > **Workflow**.
+1. Connect your repository and configure as above.
+1. Click **Create Workflow**.
+
+Note the service slug -- you'll need this for the API service.
 
 ## Testing Workflow Service in Render Dashboard
 
@@ -395,32 +422,40 @@ Returns statistical metrics for numeric columns.
 
 **Note:** The workflow service doesn't handle file uploads - it processes raw CSV content. For file uploads, use the API service (tested via HTTP endpoints, not the Dashboard).
 
-### Step 2: Deploy API Service
+### Step 2: Deploy API service
 
-**Service Type**: Web Service
+**Service type**: Web Service
 
-**Configuration:**
-- **Name**: `file-analyzer-api`
-- **Build Command**:
-  ```bash
-  cd file-analyzer/api-service && pip install -r requirements.txt
-  ```
-- **Start Command**:
-  ```bash
-  cd file-analyzer/api-service && uvicorn main:app --host 0.0.0.0 --port $PORT
-  ```
+**Python:**
 
-**Environment Variables:**
-- `RENDER_API_KEY` - Your Render API key (same as workflow service)
-- `WORKFLOW_SERVICE_SLUG` - Your workflow service slug (e.g., `file-analyzer-workflows`)
+| Setting | Value |
+|---|---|
+| Name | `file-analyzer-api` |
+| Build command | `cd file-analyzer/python/api-service && pip install -r requirements.txt` |
+| Start command | `cd file-analyzer/python/api-service && uvicorn main:app --host 0.0.0.0 --port $PORT` |
 
-**Deployment Steps:**
-1. Go to Render Dashboard
-2. Click **"New +"** → **"Web Service"**
-3. Connect your repository
-4. Configure as above
-5. Set environment variables (including `WORKFLOW_SERVICE_SLUG`!)
-6. Click **"Create Web Service"**
+**TypeScript:**
+
+| Setting | Value |
+|---|---|
+| Name | `file-analyzer-api` |
+| Build command | `cd file-analyzer/typescript/api-service && npm install && npm run build` |
+| Start command | `cd file-analyzer/typescript/api-service && npm start` |
+
+**Environment variables:**
+
+| Variable | Description |
+|---|---|
+| `RENDER_API_KEY` | Your Render API key (same as workflow service) |
+| `WORKFLOW_SERVICE_SLUG` | Your workflow service slug (e.g., `file-analyzer-workflows`) |
+
+**Deployment steps:**
+
+1. Go to Render Dashboard.
+1. Click **New +** > **Web Service**.
+1. Connect your repository and configure as above.
+1. Set environment variables (including `WORKFLOW_SERVICE_SLUG`).
+1. Click **Create Web Service**.
 
 ### Step 3: Test the Deployed Services
 
@@ -669,23 +704,19 @@ def parse_excel_data(file_content: bytes) -> dict:
    - Use file hash as cache key
    - Store results in Redis or database
 
-## Important Notes
+## Important notes
 
-- **Python-only**: Render Workflows are only supported in Python via `render-sdk`
-- **No Blueprint Support**: Workflows don't support `render.yaml` blueprint configuration
-- **Service Types**: Workflow service (for tasks) vs Web Service (for API)
-- **Task Arguments**: Passed as a dict: `{"arg1": value1, "arg2": value2}`
-- **Awaitable Pattern**: Use `await task_run` to wait for completion
-- **Service Slug**: Set correctly in `WORKFLOW_SERVICE_SLUG` environment variable
-- **API Key**: Required in both services, get from Account Settings
+- **Service types**: Workflow service (for tasks) vs. Web Service (for API).
+- **Task arguments**: Passed as a dict/object: `{"arg1": value1, "arg2": value2}`.
+- **Awaitable pattern**: Use `await taskRun` to wait for completion.
+- **Service slug**: Set correctly in `WORKFLOW_SERVICE_SLUG` environment variable.
+- **API key**: Required in both services, get from Account Settings.
 
 ## Resources
 
-- [Render Workflows Documentation](https://docs.render.com/workflows)
+- [Render Workflows documentation](https://docs.render.com/workflows)
 - [Render SDK on PyPI](https://pypi.org/project/render-sdk/)
-- [FastAPI Documentation](https://fastapi.tiangolo.com/)
+- [Render SDK on npm](https://www.npmjs.com/package/@renderinc/sdk)
+- [FastAPI documentation](https://fastapi.tiangolo.com/)
+- [Express documentation](https://expressjs.com/)
 - [Render Dashboard](https://dashboard.render.com/)
-
----
-
-**Built with Render Workflows** | [Render.com](https://render.com/)

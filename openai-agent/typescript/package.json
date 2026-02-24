@@ -1,0 +1,20 @@
+{
+  "name": "openai-agent-workflow",
+  "version": "1.0.0",
+  "description": "OpenAI Agent - AI customer support agent with Render Workflows (TypeScript)",
+  "type": "module",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/main.js",
+    "dev": "tsx src/main.ts"
+  },
+  "dependencies": {
+    "@renderinc/sdk": "latest",
+    "dotenv": "^16.4.7",
+    "openai": "^4.77.0"
+  },
+  "devDependencies": {
+    "tsx": "^4.19.0",
+    "typescript": "^5.7.0"
+  }
+}

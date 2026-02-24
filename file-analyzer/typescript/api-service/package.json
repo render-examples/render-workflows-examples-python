@@ -1,0 +1,23 @@
+{
+  "name": "file-analyzer-api-service",
+  "version": "1.0.0",
+  "description": "File Analyzer API Service - Express gateway for workflow tasks (TypeScript)",
+  "type": "module",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/main.js",
+    "dev": "tsx src/main.ts"
+  },
+  "dependencies": {
+    "@renderinc/sdk": "latest",
+    "dotenv": "^16.4.7",
+    "express": "^5.1.0",
+    "multer": "^1.4.5-lts.2"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.0",
+    "@types/multer": "^1.4.12",
+    "tsx": "^4.19.0",
+    "typescript": "^5.7.0"
+  }
+}

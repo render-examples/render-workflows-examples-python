@@ -34,61 +34,60 @@ run_etl_pipeline (main orchestrator)
 ## Local Development
 
 ### Prerequisites
-- Python 3.10+
 
-### Setup and Run
+- Python 3.10+ (for the Python version)
+- Node.js 18+ (for the TypeScript version)
+
+### Python
 
 ```bash
-# Navigate to example directory
-cd etl-job
-
-# Install dependencies
+cd etl-job/python
 pip install -r requirements.txt
-
-# Run the workflow service
 python main.py
+```
+
+### TypeScript
+
+```bash
+cd etl-job/typescript
+npm install
+npm run dev
 ```
 
 ## Deploying to Render
 
-### Service Configuration
+### Service configuration
 
-**Service Type**: Workflow
+**Service type**: Workflow
 
-**Build Command**:
-```bash
-cd etl-job && pip install -r requirements.txt
-```
+**Python:**
 
-**Start Command**:
-```bash
-cd etl-job && python main.py
-```
+| Setting | Value |
+|---|---|
+| Build command | `cd etl-job/python && pip install -r requirements.txt` |
+| Start command | `cd etl-job/python && python main.py` |
 
-### Environment Variables
+**TypeScript:**
 
-Required:
-- `RENDER_API_KEY` - Your Render API key (from Render dashboard)
+| Setting | Value |
+|---|---|
+| Build command | `cd etl-job/typescript && npm install && npm run build` |
+| Start command | `cd etl-job/typescript && npm start` |
 
-### Deployment Steps
+### Environment variables
 
-1. **Create Workflow Service**
-   - Go to Render Dashboard
-   - Click "New +" → "Workflow"
-   - Connect your repository
-   - Name: `etl-job-workflows`
+| Variable | Description |
+|---|---|
+| `RENDER_API_KEY` | Your Render API key (from Render Dashboard) |
 
-2. **Configure Build Settings**
-   - Build Command: `cd etl-job && pip install -r requirements.txt`
-   - Start Command: `cd etl-job && python main.py`
+### Deployment steps
 
-3. **Set Environment Variables**
-   - Add `RENDER_API_KEY` in the Environment section
-   - Get API key from: Render Dashboard → Account Settings → API Keys
-
-4. **Deploy**
-   - Click "Create Workflow"
-   - Render will build and start your workflow service
+1. Go to Render Dashboard.
+1. Click **New +** > **Workflow**.
+1. Connect your repository.
+1. Set the build and start commands for your chosen language.
+1. Add `RENDER_API_KEY` in the Environment section.
+1. Click **Create Workflow**.
 
 ## Testing in Render Dashboard
 
@@ -218,8 +217,6 @@ async def transform_batch_parallel(records: list[dict]) -> dict:
     return results
 ```
 
-## Important Notes
+## Important notes
 
-- **Python-only**: Workflows are only supported in Python via render-sdk
-- **No Blueprint Support**: Workflows don't support render.yaml blueprint configuration
-- **Service Type**: Deploy as a Workflow service on Render (not Background Worker or Web Service)
+- **Service type**: Deploy as a Workflow service on Render (not Background Worker or Web Service).
