@@ -47,7 +47,6 @@ def get_http_client():
 app = Workflows(
     default_retry=Retry(max_retries=3, wait_duration_ms=2000, backoff_scaling=1.5),
     default_timeout=300,
-    auto_start=True,
 )
 
 
@@ -493,3 +492,6 @@ async def run_data_pipeline(user_ids: list[str]) -> dict:
             "error": str(e),
             "failed_at": datetime.now().isoformat()
         }
+
+
+app.start()

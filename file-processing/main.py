@@ -33,7 +33,6 @@ logger = logging.getLogger(__name__)
 app = Workflows(
     default_retry=Retry(max_retries=3, wait_duration_ms=1000, backoff_scaling=1.5),
     default_timeout=300,
-    auto_start=True,
 )
 
 
@@ -512,3 +511,6 @@ async def generate_consolidated_report(batch_result: dict) -> dict:
                f"JSON keys: {total_json_keys}")
 
     return report
+
+
+app.start()

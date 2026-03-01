@@ -30,7 +30,6 @@ logger = logging.getLogger(__name__)
 app = Workflows(
     default_retry=Retry(max_retries=3, wait_duration_ms=1000, backoff_scaling=1.5),
     default_timeout=300,
-    auto_start=True,
 )
 
 
@@ -334,3 +333,6 @@ async def run_etl_pipeline(source_file: str) -> dict:
             'error': str(e),
             'failed_at': datetime.now().isoformat()
         }
+
+
+app.start()

@@ -30,7 +30,6 @@ logger = logging.getLogger(__name__)
 app = Workflows(
     default_retry=Retry(max_retries=2, wait_duration_ms=1000, backoff_scaling=1.5),
     default_timeout=300,
-    auto_start=True,
 )
 
 
@@ -326,3 +325,6 @@ async def analyze_file(file_content: str) -> dict:
         "insights": insights,
         "completed_at": datetime.now().isoformat()
     }
+
+
+app.start()

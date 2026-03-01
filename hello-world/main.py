@@ -21,8 +21,8 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-# Initialize Workflows app with auto_start enabled
-app = Workflows(auto_start=True)
+# Initialize Workflows app
+app = Workflows()
 
 
 # ============================================================================
@@ -204,3 +204,6 @@ async def calculate_and_process(a: int, b: int, *more_numbers: int) -> dict:
 
     logger.info("[WORKFLOW] Multi-step workflow complete")
     return final_result
+
+
+app.start()
