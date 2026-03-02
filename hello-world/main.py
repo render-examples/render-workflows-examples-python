@@ -43,18 +43,6 @@ def double(x: int) -> int:
     Returns:
         The doubled number
     """
-    # Handle case where x might be a dictionary instead of an integer
-    if isinstance(x, dict):
-        if 'x' in x:
-            x = x['x']
-            logger.info(f"[TASK] Extracted x from dictionary: {x}")
-        else:
-            logger.error(f"[TASK] Dictionary input missing 'x' key: {x}")
-            raise ValueError(f"Expected integer or dict with 'x' key, got: {x}")
-    elif not isinstance(x, int):
-        logger.error(f"[TASK] Invalid input type: {type(x)}, value: {x}")
-        raise ValueError(f"Expected integer, got: {type(x)}")
-
     logger.info(f"[TASK] Doubling {x}")
     result = x * 2
     logger.info(f"[TASK] Result: {result}")
@@ -131,7 +119,6 @@ async def process_numbers(*numbers: int) -> dict:
     Returns:
         Dictionary with original numbers and their doubled values
     """
-    # Convert to list for easier handling
     numbers_list = list(numbers)
     
     logger.info(f"[WORKFLOW] Starting: process_numbers({numbers_list})")
@@ -180,7 +167,6 @@ async def calculate_and_process(a: int, b: int, *more_numbers: int) -> dict:
     Returns:
         Dictionary with results from multiple workflow steps
     """
-    # Convert to list for easier handling
     more_numbers_list = list(more_numbers)
     
     logger.info("[WORKFLOW] Starting multi-step workflow")
@@ -206,4 +192,5 @@ async def calculate_and_process(a: int, b: int, *more_numbers: int) -> dict:
     return final_result
 
 
-app.start()
+if __name__ == "__main__":
+    app.start()

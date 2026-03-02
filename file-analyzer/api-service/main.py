@@ -16,7 +16,7 @@ import logging
 from typing import Any
 from fastapi import FastAPI, File, UploadFile, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from render_sdk import Render
+from render_sdk import RenderAsync
 from render_sdk.client.errors import RenderError, TaskRunError
 from pydantic import BaseModel
 
@@ -62,9 +62,9 @@ class HealthResponse(BaseModel):
 
 
 # Client SDK helper functions
-def get_client() -> Render:
+def get_client() -> RenderAsync:
     """
-    Get Render API client.
+    Get async Render API client.
 
     The Client SDK requires a RENDER_API_KEY environment variable.
     Get your API key from: Render Dashboard → Account Settings → API Keys
@@ -76,7 +76,7 @@ def get_client() -> Render:
             status_code=500,
             detail="RENDER_API_KEY not configured. Get your API key from Render Dashboard → Account Settings → API Keys"
         )
-    return Render()  # Uses RENDER_API_KEY env var automatically
+    return RenderAsync()  # Uses RENDER_API_KEY env var automatically
 
 
 def get_task_identifier(task_name: str) -> str:
@@ -191,18 +191,17 @@ async def analyze_file(file: UploadFile = File(...)):
 
         logger.info(f"Calling workflow task: {task_identifier}")
 
-        # CLIENT SDK CALL: Run the workflow task
-        # Format: client.workflows.run_task(task_identifier, {"arg": value})
-        task_run = await client.workflows.run_task(
+        # CLIENT SDK CALL: Start the workflow task
+        # start_task returns an AwaitableTaskRun immediately
+        started_run = await client.workflows.start_task(
             task_identifier,
             {"file_content": file_content_str}
         )
 
-        logger.info(f"Task started: {task_run.id}")
+        logger.info(f"Task started: {started_run.id}")
 
-        # CLIENT SDK CALL: Await the task completion
-        # This will block until the task finishes
-        result = await task_run
+        # Await the AwaitableTaskRun to wait for completion
+        result = await started_run
 
         logger.info(f"Task completed with status: {result.status}")
 
@@ -210,7 +209,7 @@ async def analyze_file(file: UploadFile = File(...)):
             task_run_id=result.id,
             status=result.status,
             message=f"File '{file.filename}' analyzed successfully",
-            result=result.results  # Task return value
+            result=result.results
         )
 
     except TaskRunError as e:
@@ -281,16 +280,16 @@ async def analyze_with_custom_task(task_name: str, file: UploadFile = File(...))
 
         logger.info(f"Calling workflow task: {task_identifier}")
 
-        # CLIENT SDK CALL: Run the specified workflow task
-        task_run = await client.workflows.run_task(
+        # CLIENT SDK CALL: Start the specified workflow task
+        started_run = await client.workflows.start_task(
             task_identifier,
             {"file_content": file_content_str}
         )
 
-        logger.info(f"Task started: {task_run.id}")
+        logger.info(f"Task started: {started_run.id}")
 
-        # CLIENT SDK CALL: Await the task completion
-        result = await task_run
+        # Await the AwaitableTaskRun to wait for completion
+        result = await started_run
 
         logger.info(f"Task '{task_name}' completed with status: {result.status}")
 
@@ -325,7 +324,7 @@ if __name__ == "__main__":
     import uvicorn
 
     logger.info("Starting File Analyzer API Service")
-    logger.info("This service calls workflow tasks using the Client SDK")
+    logger.info("This service calls workflow tasks using the async Client SDK (RenderAsync)")
     logger.info("Required environment variables:")
     logger.info("  - RENDER_API_KEY: Your Render API key")
     logger.info("  - WORKFLOW_SERVICE_SLUG: Your workflow service slug (e.g., 'file-analyzer-workflows')")

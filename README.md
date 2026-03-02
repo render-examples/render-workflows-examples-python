@@ -6,7 +6,7 @@ A curated collection of production-ready workflow examples demonstrating various
 
 These examples demonstrate how to build robust, scalable workflows using Render's Python SDK. All examples follow best practices for production deployments and include comprehensive documentation.
 
-Render Workflows are Python-only (via `render-sdk`) and must be deployed as Workflow services on Render.
+Render Workflows support both Python and TypeScript. This repo contains Python examples using the `render-sdk` package, deployed as Workflow services on Render.
 
 ## Examples
 

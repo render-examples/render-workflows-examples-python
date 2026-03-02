@@ -327,4 +327,5 @@ async def analyze_file(file_content: str) -> dict:
     }
 
 
-app.start()
+if __name__ == "__main__":
+    app.start()

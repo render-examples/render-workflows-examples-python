@@ -411,7 +411,6 @@ async def process_file_batch(*file_paths: str) -> dict:
     Returns:
         Dictionary with results for all files
     """
-    # Convert to list for easier handling
     file_paths_list = list(file_paths)
     
     logger.info("=" * 80)
@@ -421,9 +420,7 @@ async def process_file_batch(*file_paths: str) -> dict:
     # Process all files in parallel
     # SUBTASK PATTERN: Call multiple subtasks concurrently using asyncio.gather()
     logger.info("[BATCH] Launching parallel file processing tasks...")
-    # Create list of subtask calls (one per file)
     tasks = [process_single_file(fp) for fp in file_paths_list]
-    # SUBTASK CALLS: Execute all process_single_file subtasks in parallel
     results = await asyncio.gather(*tasks)
 
     # Aggregate results
@@ -513,4 +510,5 @@ async def generate_consolidated_report(batch_result: dict) -> dict:
     return report
 
 
-app.start()
+if __name__ == "__main__":
+    app.start()

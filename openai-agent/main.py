@@ -482,7 +482,6 @@ async def multi_turn_conversation(*messages: str) -> dict:
     Returns:
         Dictionary with full conversation and all responses
     """
-    # Convert to list for easier handling
     messages_list = list(messages)
 
     logger.info("=" * 80)
@@ -522,4 +521,5 @@ async def multi_turn_conversation(*messages: str) -> dict:
     }
 
 
-app.start()
+if __name__ == "__main__":
+    app.start()

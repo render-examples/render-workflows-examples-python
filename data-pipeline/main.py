@@ -494,4 +494,5 @@ async def run_data_pipeline(user_ids: list[str]) -> dict:
         }
 
 
-app.start()
+if __name__ == "__main__":
+    app.start()

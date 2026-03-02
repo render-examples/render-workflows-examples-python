@@ -335,4 +335,5 @@ async def run_etl_pipeline(source_file: str) -> dict:
         }
 
 
-app.start()
+if __name__ == "__main__":
+    app.start()
