@@ -7,21 +7,24 @@ description: AI-powered agent with tool calling and multi-turn conversations
 
 workflowsRoot: .
 
-buildCommand: pip install -r requirements.txt
-startCommand: python main.py
+renderBuildCommand: pip install -r requirements.txt
+renderStartCommand: python main.py
 
-additionalNextSteps:
+nextSteps:
+  - label: Enter your project directory
+    command: cd {{dir}}
+  - label: Start your local task server
+    command: render workflows dev -- {{startCommand}}
+    hint: This runs your workflow service locally, allowing you to view and run tasks without deploying to Render.
   - label: Set your OpenAI API key
     command: export OPENAI_API_KEY=your-key-here
     hint: Required for the agent to call GPT-4.
-  - label: Run a conversation from the CLI (in a separate terminal)
+  - label: Run a conversation locally
     command: "render workflows tasks start multi_turn_conversation --local --input='[\"What is the status of order ORD-001?\"]'"
     hint: The agent will use tool calling to look up the order and respond.
   - label: Deploy your workflow service to Render
     hint: |
       To deploy this workflow to Render, first push this code to a remote repository. Then, create a workflow service from your Render Dashboard, connect it to your repository, and provide the following build and start commands:
-      • Build command: {{buildCommand}}
-      • Start command: {{startCommand}}
+      • Build command: {{renderBuildCommand}}
+      • Start command: {{renderStartCommand}}
       Your OPENAI_API_KEY can be set as an environment variable during service creation.
-  - label: Connect your app
-    hint: See https://github.com/render-oss/sdk/blob/main/python/README.md for Client SDK integration snippets.
