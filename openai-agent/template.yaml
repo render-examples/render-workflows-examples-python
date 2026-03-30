@@ -13,12 +13,12 @@ renderStartCommand: python main.py
 nextSteps:
   - label: Enter your project directory
     command: cd {{dir}}
-  - label: Start your local task server
+  - label: Start your local workflow service
     command: render workflows dev -- {{startCommand}}
     hint: This runs your workflow service locally, allowing you to view and run tasks without deploying to Render.
   - label: Set your OpenAI API key
     command: export OPENAI_API_KEY=your-key-here
-    hint: Required for the agent to call GPT-4.
+    hint: Required for the agent to call the configured OpenAI model.
   - label: Run a conversation locally (in another terminal)
     command: "render workflows tasks start multi_turn_conversation --local --input='[\"What is the status of order ORD-001?\"]'"
     hint: The agent will use tool calling to look up the order and respond.

@@ -179,18 +179,16 @@ Task: `multi_turn_conversation`
 
 Input:
 ```json
-{
-  "messages": [
-    "What is your return policy?",
-    "What is the status of order ORD-001?",
-    "Can you process a refund for that order? It arrived damaged."
-  ]
-}
+[
+  "What is your return policy?",
+  "What is the status of order ORD-001?",
+  "Can you process a refund for that order? It arrived damaged."
+]
 ```
 
 This will process all messages in sequence, maintaining context between turns.
 
-**Note:** The agent uses OpenAI GPT-4, so you'll see the AI making intelligent decisions about which tools to call based on the user's message.
+**Note:** The agent uses the configured OpenAI model, so you'll see the AI decide which tools to call based on the user's message.
 
 ## Triggering via SDK
 
@@ -210,24 +208,18 @@ task_run = await render.workflows.run_task(
         "conversation_history": []
     }
 )
-
-result = await task_run
-print(f"Agent: {result.results['response']}")
+print(f"Agent: {task_run.results['response']}")
 
 # Multi-turn conversation
 task_run = await render.workflows.run_task(
     "openai-agent-workflows/multi_turn_conversation",
-    {
-        "messages": [
-            "What is your return policy?",
-            "What is the status of order ORD-001?",
-            "Can you process a refund for that order? It arrived damaged."
-        ]
-    }
+    [
+        "What is your return policy?",
+        "What is the status of order ORD-001?",
+        "Can you process a refund for that order? It arrived damaged."
+    ]
 )
-
-result = await task_run
-for turn in result.results['turns']:
+for turn in task_run.results['turns']:
     print(f"User: {turn['user']}")
     print(f"Agent: {turn['assistant']}")
     print(f"Tools used: {[t['tool'] for t in turn['tool_calls']]}")
@@ -259,19 +251,19 @@ Searches the knowledge base for information.
 
 ## Task Descriptions
 
-### Tool Tasks (Called as Subtasks)
+### Tool Tasks (Called via Task Chaining)
 
-**`get_order_status`**: Looks up order status. Called as a subtask when the agent needs order information.
+**`get_order_status`**: Looks up order status. Chained when the agent needs order information.
 
-**`process_refund`**: Processes refunds. Called as a subtask when the agent needs to issue a refund.
+**`process_refund`**: Processes refunds. Chained when the agent needs to issue a refund.
 
-**`search_knowledge_base`**: Searches for information. Called as a subtask when the agent needs help articles.
+**`search_knowledge_base`**: Searches for information. Chained when the agent needs help articles.
 
 ### Orchestration Tasks
 
 **`call_llm_with_tools`**: Calls OpenAI API with tool definitions. The model decides whether to call tools or respond directly.
 
-**`execute_tool`**: Dynamically executes a tool as a subtask based on the agent's decision:
+**`execute_tool`**: Dynamically executes a tool via task chaining based on the agent's decision:
 ```python
 @app.task
 async def execute_tool(tool_name: str, arguments: dict) -> dict:
@@ -282,26 +274,26 @@ async def execute_tool(tool_name: str, arguments: dict) -> dict:
         "search_knowledge_base": search_knowledge_base
     }
 
-    # SUBTASK CALL: Execute the appropriate tool function
+    # TASK CHAINING: Execute the appropriate tool function
     result = await tool_map[tool_name](**arguments)
     return result
 ```
 
-**`agent_turn`**: Executes a single conversation turn with nested subtask execution:
+**`agent_turn`**: Executes a single conversation turn with nested task chaining:
 1. `await call_llm_with_tools(...)` - Call LLM with user message
 2. If tools requested: `await execute_tool(...)` for each tool (which then calls the actual tool task)
 3. `await call_llm_with_tools(...)` again with tool results to generate final response
 
-This demonstrates **nested subtask calling**: `agent_turn` → `execute_tool` → `get_order_status` (3 levels deep!).
+This demonstrates **nested task chaining**: `agent_turn` → `execute_tool` → `get_order_status` (3 levels deep).
 
 **`multi_turn_conversation`**: Orchestrates multiple conversation turns:
 ```python
 for user_message in messages:
-    # SUBTASK CALL: Process each message through agent_turn
+    # TASK CHAINING: Process each message through agent_turn
     turn_result = await agent_turn(user_message, conversation_history)
     conversation_history = turn_result["conversation_history"]
 ```
-This demonstrates **calling subtasks in a loop** to maintain conversation state.
+This demonstrates **task chaining in a loop** to maintain conversation state.
 
 ## Adding New Tools
 
@@ -372,9 +364,9 @@ Agent: "We offer free shipping on orders over $50. Standard shipping takes 3-5 b
 
 ## Important Notes
 
-- **Python-only**: Workflows are only supported in Python via render-sdk
+- **SDK languages**: Workflows support Python and TypeScript; this repo's examples are Python.
 - **No Blueprint Support**: Workflows don't support render.yaml blueprint configuration
 - **OpenAI Costs**: Be mindful of API costs when running the agent frequently
-- **Model Selection**: Currently uses GPT-4; can be changed to GPT-3.5-turbo for cost savings
+- **Model Selection**: The default model is configurable in `main.py`; choose based on latency/cost/quality needs.
 - **Tool Safety**: In production, add authorization checks before executing sensitive tools
 - **Rate Limiting**: Consider implementing rate limits for production deployments

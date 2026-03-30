@@ -189,11 +189,9 @@ task_run = await render.workflows.run_task(
     "data-pipeline-workflows/run_data_pipeline",
     {"user_ids": ["user_1", "user_2", "user_3", "user_4"]}
 )
-
-result = await task_run
-print(f"Pipeline status: {result.results['status']}")
-print(f"Total revenue: ${result.results['insights']['revenue']['total']}")
-print(f"Segment distribution: {result.results['segment_distribution']}")
+print(f"Pipeline status: {task_run.results['status']}")
+print(f"Total revenue: ${task_run.results['insights']['revenue']['total']}")
+print(f"Segment distribution: {task_run.results['insights']['segment_distribution']}")
 ```
 
 ## Pipeline Stages
@@ -212,18 +210,18 @@ Using `asyncio.gather()` ensures all sources are fetched in parallel for maximum
 
 ### Stage 2: Transform
 
-**`transform_user_data`**: Combines data from all sources and enriches each user by calling subtasks:
+**`transform_user_data`**: Combines data from all sources and enriches each user by chaining task runs:
 ```python
 for user in users:
-    # SUBTASK CALL: Calculate metrics for this user
+    # TASK CHAINING: Calculate metrics for this user
     user_metrics = await calculate_user_metrics(user, transactions, engagement)
 
-    # SUBTASK CALL: Enrich with geographic data
+    # TASK CHAINING: Enrich with geographic data
     geo_data = await enrich_with_geo_data(user['email'])
 
     enriched_users.append({**user_metrics, 'geo': geo_data})
 ```
-This demonstrates **sequential subtask calls per item** in a transformation loop.
+This demonstrates **sequential task chaining per item** in a transformation loop.
 
 **`calculate_user_metrics`**: Calculates per-user metrics:
 - Total spent and refunded
@@ -279,15 +277,15 @@ This demonstrates **sequential subtask calls per item** in a transformation loop
 
 ## Key Patterns Demonstrated
 
-### Parallel Extraction with Subtasks
+### Parallel Extraction with Task Chaining
 
 ```python
-# SUBTASK PATTERN: Launch multiple subtasks in parallel
+# TASK CHAINING PATTERN: Launch multiple task runs in parallel
 user_task = fetch_user_data(user_ids)
 transaction_task = fetch_transaction_data(user_ids)
 engagement_task = fetch_engagement_data(user_ids)
 
-# SUBTASK CALLS: Wait for all three subtasks to complete
+# CHAINED RUNS: Wait for all three task runs to complete
 user_data, transaction_data, engagement_data = await asyncio.gather(
     user_task,
     transaction_task,
@@ -295,24 +293,24 @@ user_data, transaction_data, engagement_data = await asyncio.gather(
 )
 ```
 
-This demonstrates **parallel subtask execution** - all three data sources are fetched simultaneously.
+This demonstrates **parallel task execution** - all three data sources are fetched simultaneously.
 This reduces total extraction time from sum(A+B+C) to max(A,B,C).
 
-### Data Enrichment with Subtasks
+### Data Enrichment with Task Chaining
 
-Each user is enriched by calling multiple subtasks:
+Each user is enriched by chaining multiple task runs:
 ```python
 for user in users:
-    # SUBTASK CALL: Calculate user-specific metrics
+    # TASK CHAINING: Calculate user-specific metrics
     metrics = await calculate_user_metrics(user, transactions, engagement)
 
-    # SUBTASK CALL: Enrich with geographic data
+    # TASK CHAINING: Enrich with geographic data
     geo = await enrich_with_geo_data(user['email'])
 
     enriched_users.append({**metrics, 'geo': geo})
 ```
 
-This shows **sequential subtask calls** for per-item enrichment.
+This shows **sequential task chaining** for per-item enrichment.
 
 ### User Segmentation
 
@@ -375,7 +373,7 @@ async def send_pipeline_notification(result: dict) -> dict:
 
 ## Important Notes
 
-- **Python-only**: Workflows are only supported in Python via render-sdk
+- **SDK languages**: Workflows support Python and TypeScript; this repo's examples are Python.
 - **No Blueprint Support**: Workflows don't support render.yaml blueprint configuration
 - **Mock Data**: Example uses simulated data; replace with real API calls in production
 - **Idempotency**: Design pipeline to be safely re-runnable

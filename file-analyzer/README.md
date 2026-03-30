@@ -145,39 +145,39 @@ file-analyzer/
 - Parses CSV content into structured data
 - Returns rows, columns, and metadata
 
-**`calculate_statistics(data: dict) -> dict`** (Subtask)
+**`calculate_statistics(data: dict) -> dict`** (Chained task)
 - Calculates statistical metrics for numeric columns
 - Returns min, max, avg, sum for each numeric column
 
-**`identify_trends(data: dict) -> dict`** (Subtask)
+**`identify_trends(data: dict) -> dict`** (Chained task)
 - Identifies patterns in categorical data
 - Returns distribution analysis and top values
 
-**`generate_insights(stats: dict, trends: dict, metadata: dict) -> dict`** (Subtask)
+**`generate_insights(stats: dict, trends: dict, metadata: dict) -> dict`** (Chained task)
 - Generates final insights report
 - Combines statistics and trends into actionable findings
 
 **`analyze_file(file_content: str) -> dict`** (Main orchestrator)
 - Coordinates the entire analysis pipeline
-- Calls parse → calculate → identify → generate as subtasks
+- Chains parse → calculate → identify → generate
 
-### Subtask Pattern
+### Task Chaining Pattern
 
-The main `analyze_file` task demonstrates subtask orchestration:
+The main `analyze_file` task demonstrates task chaining orchestration:
 
 ```python
 @app.task
 async def analyze_file(file_content: str) -> dict:
-    # SUBTASK CALL: Parse CSV data
+    # TASK CHAINING: Parse CSV data
     parsed_data = await parse_csv_data(file_content)
 
-    # SUBTASK CALL: Calculate statistics
+    # TASK CHAINING: Calculate statistics
     stats = await calculate_statistics(parsed_data)
 
-    # SUBTASK CALL: Identify trends
+    # TASK CHAINING: Identify trends
     trends = await identify_trends(parsed_data)
 
-    # SUBTASK CALL: Generate insights
+    # TASK CHAINING: Generate insights
     insights = await generate_insights(stats, trends, parsed_data)
 
     return {"statistics": stats, "trends": trends, "insights": insights}
@@ -213,19 +213,16 @@ render = Render()
 service_slug = os.getenv("WORKFLOW_SERVICE_SLUG")
 task_identifier = f"{service_slug}/analyze_file"
 
-# 3. Call the workflow task with arguments as a dict
+# 3. Call the workflow task with arguments (list or dict)
 task_run = await render.workflows.run_task(
     task_identifier,
     {"file_content": file_content}
 )
 
-# 4. Await the task completion
-result = await task_run
-
-# 5. Access the results
-print(result.id)        # Task run ID
-print(result.status)    # Task status (e.g., "SUCCEEDED")
-print(result.results)   # Task return value
+# 4. Access the completed run details
+print(task_run.id)        # Task run ID
+print(task_run.status)    # Task status (e.g., "completed")
+print(task_run.results)   # Task return value
 ```
 
 ## Local Development
@@ -503,19 +500,16 @@ render = Render()
 
 **Calling Tasks:**
 ```python
-# Format: render.workflows.run_task(task_identifier, {args})
+# Format: render.workflows.run_task(task_identifier, input_data)
 task_run = await render.workflows.run_task(
     "service-slug/task-name",
     {"arg1": value1, "arg2": value2}
 )
 
-# Await completion
-result = await task_run
-
 # Access results
-print(result.id)       # Task run ID
-print(result.status)   # "SUCCEEDED", "FAILED", etc.
-print(result.results)  # Return value from task
+print(task_run.id)       # Task run ID
+print(task_run.status)   # "completed", "failed", etc.
+print(task_run.results)  # Return value from task
 ```
 
 ### 2. Task SDK Usage
@@ -582,7 +576,8 @@ async def analyze_file(
 @app.post("/analyze")
 async def analyze_file(file: UploadFile):
     # Trigger analysis
-    result = await task_run
+    task_run = await render.workflows.run_task(task_identifier, {"file_content": content})
+    result = task_run
 
     # Store in database
     db.insert({
@@ -661,7 +656,7 @@ def parse_excel_data(file_content: bytes) -> dict:
 
 2. **Task Timeout**: Long-running analysis may timeout
    - Configure appropriate timeout in Client SDK
-   - Consider breaking into smaller subtasks
+   - Consider breaking into smaller chained tasks
 
 3. **Concurrent Requests**: FastAPI handles concurrent requests well
    - Monitor workflow service capacity
@@ -673,11 +668,11 @@ def parse_excel_data(file_content: bytes) -> dict:
 
 ## Important Notes
 
-- **Python-only**: Render Workflows are only supported in Python via `render-sdk`
+- **SDK languages**: Workflows support Python and TypeScript; this repo's examples are Python.
 - **No Blueprint Support**: Workflows don't support `render.yaml` blueprint configuration
 - **Service Types**: Workflow service (for tasks) vs Web Service (for API)
-- **Task Arguments**: Passed as a dict: `{"arg1": value1, "arg2": value2}`
-- **Awaitable Pattern**: Use `await task_run` to wait for completion
+- **Task Arguments**: Can be passed as either a list (positional) or a dict (named)
+- **Run pattern**: `run_task` already waits for completion and returns `TaskRunDetails`
 - **Service Slug**: Set correctly in `WORKFLOW_SERVICE_SLUG` environment variable
 - **API Key**: Required in both services, get from Account Settings
 

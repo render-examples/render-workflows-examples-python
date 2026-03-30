@@ -13,7 +13,7 @@ Process customer signup data from CSV files with validation, cleaning, and stati
 
 ## Features
 
-- **Subtask Execution**: Demonstrates calling tasks from other tasks using `await`
+- **Task Chaining**: Demonstrates calling tasks from other tasks using `await`
 - **Extract**: Read data from CSV files (extensible to APIs, databases)
 - **Transform**: Validate records with comprehensive error tracking
 - **Load**: Compute statistics and prepare aggregated insights
@@ -136,11 +136,8 @@ task_run = await render.workflows.run_task(
     "etl-job-workflows/run_etl_pipeline",
     {"source_file": "sample_data.csv"}
 )
-
-# Wait for completion
-result = await task_run
-print(f"Pipeline status: {result.results['status']}")
-print(f"Valid records: {result.results['transform']['valid_count']}")
+print(f"Pipeline status: {task_run.results['status']}")
+print(f"Valid records: {task_run.results['transform']['valid_count']}")
 ```
 
 ## Sample Data
@@ -163,25 +160,25 @@ This demonstrates how the pipeline handles data quality issues.
 - Validates age range (0-120)
 - Returns cleaned data with error tracking
 
-**`transform_batch`**: Processes all records by calling `validate_record` as a subtask for each one:
+**`transform_batch`**: Processes all records by chaining `validate_record` for each one:
 ```python
 for record in records:
-    # Call validate_record as a subtask
+    # Chain validate_record for each record
     validated = await validate_record(record)
 ```
-This demonstrates **calling subtasks in a loop** for batch processing.
+This demonstrates **task chaining in a loop** for batch processing.
 
 **`compute_statistics`**: Aggregates valid records to produce:
 - Country distribution
 - Age statistics (min, max, average)
 - Data quality metrics
 
-**`run_etl_pipeline`**: Main orchestrator that calls three subtasks sequentially:
+**`run_etl_pipeline`**: Main orchestrator that chains three task runs sequentially:
 1. `await extract_csv_data(source_file)` - Extract data
 2. `await transform_batch(raw_records)` - Validate records (which calls `validate_record` for each)
 3. `await compute_statistics(valid_records)` - Generate insights
 
-This demonstrates **sequential subtask orchestration** for multi-stage pipelines.
+This demonstrates **sequential task chaining** for multi-stage pipelines.
 
 ## Extending This Example
 
@@ -220,6 +217,6 @@ async def transform_batch_parallel(records: list[dict]) -> dict:
 
 ## Important Notes
 
-- **Python-only**: Workflows are only supported in Python via render-sdk
+- **SDK languages**: Workflows support Python and TypeScript; this repo's examples are Python.
 - **No Blueprint Support**: Workflows don't support render.yaml blueprint configuration
 - **Service Type**: Deploy as a Workflow service on Render (not Background Worker or Web Service)

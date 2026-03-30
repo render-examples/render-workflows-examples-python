@@ -158,7 +158,7 @@ async def analyze_file(file: UploadFile = File(...)):
     1. Read the uploaded file content
     2. Get the Client SDK instance
     3. Get the task identifier (format: {service-slug}/{task-name})
-    4. Call the task using client.workflows.run_task()
+    4. Start the task using client.workflows.start_task()
     5. Await the result
     6. Return the analysis results
 
