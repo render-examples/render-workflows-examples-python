@@ -446,7 +446,7 @@ Make sure:
 ### Import errors
 
 Make sure:
-- `requirements.txt` includes `render-sdk>=0.5.0`
+- `requirements.txt` includes `render-sdk>=0.6.0`
 - Build command is running correctly
 - Python version is 3.10 or higher
 

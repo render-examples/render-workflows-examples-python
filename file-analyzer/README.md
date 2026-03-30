@@ -576,7 +576,9 @@ async def analyze_file(
 @app.post("/analyze")
 async def analyze_file(file: UploadFile):
     # Trigger analysis
-    task_run = await render.workflows.run_task(task_identifier, {"file_content": content})
+    task_identifier = f"{os.getenv('WORKFLOW_SERVICE_SLUG')}/analyze_file"
+    file_content = (await file.read()).decode("utf-8")
+    task_run = await render.workflows.run_task(task_identifier, {"file_content": file_content})
     result = task_run
 
     # Store in database
