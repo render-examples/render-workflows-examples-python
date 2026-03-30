@@ -16,9 +16,9 @@ Render Workflows support both Python and TypeScript. This repo contains Python e
 
 | Example | Use Case | Key Patterns | Extra Dependencies |
 |---------|----------|--------------|-------------------|
-| [**Hello World**](./hello-world/) | Learn workflow basics with simple number processing | Task definition, subtask calling with `await`, basic orchestration | None |
-| [**ETL Job**](./etl-job/) | Process CSV data with validation and statistics | Subtasks, sequential processing, batch operations, data validation | None |
-| [**OpenAI Agent**](./openai-agent/) | AI customer support agent with tool calling | Tool calling, nested subtasks (3 levels deep), stateful workflows, dynamic orchestration | `openai` |
+| [**Hello World**](./hello-world/) | Learn workflow basics with simple number processing | Task definition, task chaining with `await`, basic orchestration | None |
+| [**ETL Job**](./etl-job/) | Process CSV data with validation and statistics | Task chaining, sequential processing, batch operations, data validation | None |
+| [**OpenAI Agent**](./openai-agent/) | AI customer support agent with tool calling | Tool calling, nested task chains (3 levels deep), stateful workflows, dynamic orchestration | `openai` |
 | [**File Processing**](./file-processing/) | Batch process multiple file formats in parallel | Parallel execution with `asyncio.gather()`, multi-format handling, aggregation | None |
 | [**Data Pipeline**](./data-pipeline/) | Multi-source customer analytics pipeline | Parallel extraction, data enrichment, combining parallel + sequential patterns | `httpx` |
 | [**File Analyzer**](./file-analyzer/) | API service calling workflow tasks for file analysis | Client SDK + Task SDK, workflow slugs, service separation, FastAPI integration | `fastapi`, `uvicorn` |
@@ -28,8 +28,8 @@ Render Workflows support both Python and TypeScript. This repo contains Python e
 The simplest possible workflow — learn the fundamentals through simple number processing.
 
 - Ultra-simple task definitions
-- Clear subtask calling examples
-- Subtasks in loops demonstration
+- Clear task-chaining examples
+- Task chaining in loops demonstration
 - Multi-step workflow orchestration
 - Heavily commented code explaining every pattern
 
@@ -43,7 +43,7 @@ Complete Extract, Transform, Load pipeline — process customer data from CSV fi
 
 - CSV data extraction with retry logic
 - Record validation and error tracking
-- Batch processing with subtasks
+- Batch processing with task chaining
 - Statistical aggregation
 - Comprehensive error handling
 
@@ -56,7 +56,7 @@ Intelligent conversational agent — a customer support bot that can answer ques
 - Multi-turn conversations with context
 - Dynamic tool/function calling
 - Stateful workflow management
-- Integration with OpenAI GPT-4
+- Integration with OpenAI models
 - Extensible tool framework
 
 [View OpenAI Agent Example →](./openai-agent/)

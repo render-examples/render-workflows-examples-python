@@ -13,7 +13,7 @@ renderStartCommand: python main.py
 nextSteps:
   - label: Enter your project directory
     command: cd {{dir}}
-  - label: Start your local task server
+  - label: Start your local workflow service
     command: render workflows dev -- {{startCommand}}
     hint: This runs your workflow service locally, allowing you to view and run tasks without deploying to Render.
   - label: Run the pipeline locally (in another terminal)

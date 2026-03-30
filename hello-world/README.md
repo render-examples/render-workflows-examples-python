@@ -6,7 +6,7 @@ The simplest possible workflow example to help you understand the basics of Rend
 
 This example teaches the fundamental concepts:
 - **What is a Task?** - A function decorated with `@app.task` that can be executed as a workflow
-- **What is a Subtask?** - A task called by another task using `await`
+- **What is Task Chaining?** - Calling one task from another with `await`
 - **How to Orchestrate** - Combining multiple tasks to create workflows
 - **How to Deploy** - Getting your first workflow running on Render
 
@@ -19,19 +19,19 @@ Simple number processing to demonstrate workflow patterns without complex busine
 ```
 calculate_and_process (multi-step orchestrator)
   ├── add_doubled_numbers
-  │   ├── double (subtask #1)
-  │   └── double (subtask #2)
+  │   ├── double (chained run #1)
+  │   └── double (chained run #2)
   └── process_numbers
-      ├── double (subtask for item 1)
-      ├── double (subtask for item 2)
-      └── double (subtask for item N)
+      ├── double (chained run for item 1)
+      ├── double (chained run for item 2)
+      └── double (chained run for item N)
 ```
 
-## Understanding Tasks and Subtasks
+## Understanding Tasks and Task Chaining
 
 ### What is a Task?
 
-A **task** is simply a Python function decorated with `@app.task`. It becomes a workflow step that Render can execute:
+A **task** is simply a Python function decorated with `@app.task`. It becomes a unit of workflow execution that Render can run:
 
 ```python
 from render_sdk import Workflows
@@ -46,27 +46,27 @@ def double(x: int) -> int:
 app.start()
 ```
 
-### What is a Subtask?
+### What is Task Chaining?
 
-A **subtask** is when one task calls another task using `await`. This is how you compose workflows:
+Task chaining is when one task calls another task using `await`. This is how you compose runs into a workflow:
 
 ```python
 @app.task
 async def add_doubled_numbers(a: int, b: int) -> dict:
-    # Call 'double' as a subtask using await
-    doubled_a = await double(a)  # ← This is a subtask call!
-    doubled_b = await double(b)  # ← This is also a subtask call!
+    # Chain two runs of 'double' using await
+    doubled_a = await double(a)  # ← Chained run
+    doubled_b = await double(b)  # ← Another chained run
 
     return {
         "sum": doubled_a + doubled_b
     }
 ```
 
-### Why Use Subtasks?
+### Why Use Task Chaining?
 
 1. **Reusability**: Write `double` once, use it everywhere
 2. **Composition**: Build complex workflows from simple building blocks
-3. **Visibility**: Render shows you each subtask execution in the dashboard
+3. **Visibility**: Render shows each task run in the dashboard
 4. **Testing**: Test individual tasks independently
 
 ## Local Development
@@ -173,7 +173,7 @@ Expected output: `10`
 
 ---
 
-**Test subtask calling:**
+**Test task chaining:**
 
 Task: `add_doubled_numbers`
 
@@ -192,11 +192,11 @@ Expected output:
 }
 ```
 
-This task calls `double` twice as subtasks!
+This task chains two runs of `double`.
 
 ---
 
-**Test subtask in a loop:**
+**Test task chaining in a loop:**
 
 Task: `process_numbers`
 
@@ -211,11 +211,11 @@ Expected output:
   "original_numbers": [1, 2, 3, 4, 5],
   "doubled_numbers": [2, 4, 6, 8, 10],
   "count": 5,
-  "explanation": "Processed 5 numbers through the double subtask"
+  "explanation": "Processed 5 numbers by chaining runs of double"
 }
 ```
 
-This calls `double` as a subtask 5 times (once for each number)!
+This chains `double` 5 times (once for each number).
 
 ---
 
@@ -228,7 +228,7 @@ Input:
 [2, 3, 10, 20, 30]
 ```
 
-This is the most complex example - it calls `add_doubled_numbers` and `process_numbers` as subtasks, which in turn call `double` multiple times. Watch the Render Dashboard to see the entire execution tree!
+This is the most complex example: it chains `add_doubled_numbers` and `process_numbers`, which in turn chain `double` multiple times.
 
 ## Triggering via SDK
 
@@ -243,18 +243,16 @@ render = Render()
 # Call the simple double task
 task_run = await render.workflows.run_task(
     "hello-world-workflows/double",
-    {"x": 5}
+    [5]
 )
-result = await task_run
-print(f"Result: {result.results}")  # Output: 10
+print(f"Result: {task_run.results}")  # Output: 10
 
-# Call the subtask orchestration example
+# Call a task-chaining example
 task_run = await render.workflows.run_task(
     "hello-world-workflows/add_doubled_numbers",
-    {"a": 3, "b": 4}
+    [3, 4]
 )
-result = await task_run
-print(f"Sum of doubled: {result.results['sum_of_doubled']}")  # Output: 14
+print(f"Sum of doubled: {task_run.results['sum_of_doubled']}")  # Output: 14
 ```
 
 ## Tasks Explained
@@ -265,62 +263,62 @@ The simplest possible task. Takes a number, doubles it, returns the result.
 
 **Purpose**: Show what a basic task looks like.
 
-**Can be called as a subtask**: Yes! Other tasks call this.
+**Can be chained from other tasks**: Yes.
 
 ---
 
 ### `add_doubled_numbers(a: int, b: int) -> dict`
 
-Demonstrates the fundamental subtask pattern.
+Demonstrates the fundamental task-chaining pattern.
 
 **What it does**:
-1. Calls `double(a)` as a subtask
-2. Calls `double(b)` as a subtask
+1. Chains `double(a)`
+2. Chains `double(b)`
 3. Adds the results together
 
-**Purpose**: Show how to call tasks as subtasks using `await`.
+**Purpose**: Show how to chain task runs with `await`.
 
 **Key Pattern**:
 ```python
-result = await double(a)  # ← Subtask call with await
+result = await double(a)  # ← Chained run with await
 ```
 
 ---
 
 ### `process_numbers(numbers: list[int]) -> dict`
 
-Demonstrates calling a subtask in a loop.
+Demonstrates chaining task runs in a loop.
 
 **What it does**:
 1. Takes a list of numbers
-2. Calls `double` as a subtask for each number
+2. Chains `double` for each number
 3. Collects all the results
 
-**Purpose**: Show how to process lists/batches using subtasks.
+**Purpose**: Show how to process lists/batches with task chaining.
 
 **Key Pattern**:
 ```python
 for num in numbers:
-    doubled = await double(num)  # ← Subtask call in a loop
+    doubled = await double(num)  # ← Task chaining in a loop
 ```
 
 ---
 
 ### `calculate_and_process(a: int, b: int, more_numbers: list[int]) -> dict`
 
-Demonstrates a multi-step workflow with multiple subtask calls.
+Demonstrates a multi-step workflow with multiple chained task runs.
 
 **What it does**:
-1. Calls `add_doubled_numbers` as a subtask
-2. Calls `process_numbers` as a subtask
+1. Chains `add_doubled_numbers`
+2. Chains `process_numbers`
 3. Combines the results
 
-**Purpose**: Show how to chain multiple subtasks to create complex workflows.
+**Purpose**: Show how to chain multiple task runs to create complex workflows.
 
 **Key Pattern**:
 ```python
-step1 = await add_doubled_numbers(a, b)   # ← First subtask
-step2 = await process_numbers(numbers)     # ← Second subtask
+step1 = await add_doubled_numbers(a, b)   # ← First chained run
+step2 = await process_numbers(numbers)    # ← Second chained run
 # Combine results
 ```
 
@@ -344,18 +342,18 @@ app.start()
 
 ### The `async` Keyword
 
-Tasks that call other tasks as subtasks must be `async`:
+Tasks that chain other tasks must be `async`:
 
 ```python
 @app.task
 async def orchestrator():
-    result = await subtask()  # ← Calls another task
+    result = await task_b()  # ← Chains another task
     return result
 ```
 
 ### The `await` Keyword
 
-Use `await` to call a task as a subtask:
+Use `await` to chain a run of another task:
 
 ```python
 result = await task_name(arguments)
@@ -369,9 +367,9 @@ All `@app.task` decorated functions are registered when defined. Call `app.start
 
 ## Common Patterns
 
-### Pattern 1: Sequential Subtasks
+### Pattern 1: Sequential Task Chaining
 
-Execute subtasks one after another:
+Execute chained runs one after another:
 
 ```python
 @app.task
@@ -382,9 +380,9 @@ async def sequential():
     return step3
 ```
 
-### Pattern 2: Independent Subtasks
+### Pattern 2: Independent Chained Runs
 
-Execute subtasks where order doesn't matter:
+Execute chained runs where order doesn't matter:
 
 ```python
 @app.task
@@ -394,9 +392,9 @@ async def independent():
     return combine(result_a, result_b)
 ```
 
-### Pattern 3: Subtasks in a Loop
+### Pattern 3: Task Chaining in a Loop
 
-Process a list by calling a subtask for each item:
+Process a list by chaining a task run for each item:
 
 ```python
 @app.task
@@ -408,9 +406,9 @@ async def batch_process(items: list):
     return results
 ```
 
-### Pattern 4: Nested Subtasks
+### Pattern 4: Nested Task Chaining
 
-Subtasks can call other subtasks:
+Tasks can chain other tasks, which can chain additional tasks:
 
 ```python
 @app.task
@@ -448,11 +446,11 @@ Make sure:
 ### Import errors
 
 Make sure:
-- `requirements.txt` includes `render-sdk>=0.5.0`
+- `requirements.txt` includes `render-sdk>=0.6.0`
 - Build command is running correctly
 - Python version is 3.10 or higher
 
-### Subtask calls not working
+### Task chaining calls not working
 
 Make sure:
 - Your task function is marked `async`
@@ -461,10 +459,10 @@ Make sure:
 
 ## Important Notes
 
-- **Python-only**: Workflows are only supported in Python via render-sdk
+- **SDK languages**: Workflows support Python and TypeScript; this repo's examples are Python.
 - **No Blueprint Support**: Workflows don't support render.yaml blueprint configuration
 - **Service Type**: Deploy as a Workflow service on Render (not Background Worker or Web Service)
-- **Async Functions**: Tasks that call subtasks must be declared as `async`
+- **Async Functions**: Tasks that chain other tasks must be declared as `async`
 
 ## Resources
 

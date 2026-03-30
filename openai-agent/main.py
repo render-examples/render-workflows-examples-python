@@ -194,7 +194,7 @@ def search_knowledge_base(query: str) -> dict:
 
 @app.task
 async def call_llm_with_tools(
-    messages: list[dict], tools: list[dict], model: str = "gpt-4"
+    messages: list[dict], tools: list[dict], model: str = "gpt-5.4"
 ) -> dict:
     """
     Call OpenAI with function/tool definitions.
@@ -252,7 +252,7 @@ async def execute_tool(tool_name: str, arguments: dict) -> dict:
     """
     Execute a tool function by name.
 
-    This demonstrates dynamic subtask execution based on agent decisions.
+    This demonstrates dynamic task chaining based on agent decisions.
 
     Args:
         tool_name: Name of the tool to execute
@@ -275,7 +275,7 @@ async def execute_tool(tool_name: str, arguments: dict) -> dict:
         logger.error(f"[AGENT] Unknown tool: {tool_name}")
         return {"error": f"Unknown tool: {tool_name}"}
 
-    # Execute the appropriate tool as a subtask
+    # Chain a run of the selected tool task
     tool_function = tool_map[tool_name]
 
     try:

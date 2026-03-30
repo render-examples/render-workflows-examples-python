@@ -89,7 +89,7 @@ def calculate_statistics(data: dict) -> dict:
     """
     Calculate statistical metrics from parsed data.
 
-    This is called as a SUBTASK by the main analyze_file task.
+    This task is typically called via task chaining from analyze_file.
 
     Args:
         data: Parsed CSV data from parse_csv_data
@@ -152,7 +152,7 @@ def identify_trends(data: dict) -> dict:
     """
     Identify trends and patterns in the data.
 
-    This is called as a SUBTASK by the main analyze_file task.
+    This task is typically called via task chaining from analyze_file.
 
     Args:
         data: Parsed CSV data from parse_csv_data
@@ -210,7 +210,7 @@ async def generate_insights(stats: dict, trends: dict, metadata: dict) -> dict:
     """
     Generate final insights report combining statistics and trends.
 
-    This is called as a SUBTASK by the main analyze_file task.
+    This task is typically called via task chaining from analyze_file.
 
     Args:
         stats: Statistics from calculate_statistics
@@ -265,14 +265,14 @@ async def analyze_file(file_content: str) -> dict:
     """
     Main orchestrator task for file analysis.
 
-    This task coordinates the entire analysis pipeline by calling
-    other tasks as SUBTASKS.
+    This task coordinates the entire analysis pipeline by chaining
+    runs of other tasks.
 
     Pipeline:
     1. Parse CSV data
-    2. Calculate statistics (SUBTASK)
-    3. Identify trends (SUBTASK)
-    4. Generate insights (SUBTASK)
+    2. Calculate statistics (chained run)
+    3. Identify trends (chained run)
+    4. Generate insights (chained run)
 
     Args:
         file_content: Raw CSV file content as string
@@ -284,7 +284,7 @@ async def analyze_file(file_content: str) -> dict:
 
     # Stage 1: Parse CSV data
     logger.info("[ANALYZE_FILE] Stage 1: Parsing CSV data")
-    # SUBTASK CALL: Parse the CSV content
+    # TASK CHAINING: Parse the CSV content
     parsed_data = await parse_csv_data(file_content)
 
     if not parsed_data["success"]:
@@ -297,19 +297,19 @@ async def analyze_file(file_content: str) -> dict:
 
     logger.info(f"[ANALYZE_FILE] Parsed {parsed_data['row_count']} rows")
 
-    # Stage 2: Calculate statistics (SUBTASK)
+    # Stage 2: Calculate statistics (chained run)
     logger.info("[ANALYZE_FILE] Stage 2: Calculating statistics")
-    # SUBTASK CALL: Calculate statistical metrics
+    # TASK CHAINING: Calculate statistical metrics
     stats = await calculate_statistics(parsed_data)
 
-    # Stage 3: Identify trends (SUBTASK)
+    # Stage 3: Identify trends (chained run)
     logger.info("[ANALYZE_FILE] Stage 3: Identifying trends")
-    # SUBTASK CALL: Identify patterns and trends
+    # TASK CHAINING: Identify patterns and trends
     trends = await identify_trends(parsed_data)
 
-    # Stage 4: Generate insights (SUBTASK)
+    # Stage 4: Generate insights (chained run)
     logger.info("[ANALYZE_FILE] Stage 4: Generating insights")
-    # SUBTASK CALL: Generate final insights report
+    # TASK CHAINING: Generate final insights report
     insights = await generate_insights(stats, trends, parsed_data)
 
     logger.info("[ANALYZE_FILE] Analysis pipeline completed successfully")

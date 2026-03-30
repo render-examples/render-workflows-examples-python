@@ -362,21 +362,21 @@ async def process_single_file(file_path: str) -> dict:
     extension = path.suffix.lower()
 
     # Read file based on type
-    # SUBTASK PATTERN: Chain multiple subtask calls together
+    # TASK CHAINING PATTERN: Chain multiple task runs together
     if extension == '.csv':
-        # SUBTASK CALL: Read CSV file
+        # TASK CHAINING: Read CSV file
         read_result = await read_csv_file(file_path)
-        # SUBTASK CALL: Analyze the CSV data (if read was successful)
+        # TASK CHAINING: Analyze CSV data (if read was successful)
         analysis = await analyze_csv_data(read_result) if read_result.get("success") else {}
     elif extension == '.json':
-        # SUBTASK CALL: Read JSON file
+        # TASK CHAINING: Read JSON file
         read_result = await read_json_file(file_path)
-        # SUBTASK CALL: Analyze JSON structure
+        # TASK CHAINING: Analyze JSON structure
         analysis = await analyze_json_structure(read_result) if read_result.get("success") else {}
     elif extension == '.txt':
-        # SUBTASK CALL: Read text file
+        # TASK CHAINING: Read text file
         read_result = await read_text_file(file_path)
-        # SUBTASK CALL: Analyze text content
+        # TASK CHAINING: Analyze text content
         analysis = await analyze_text_content(read_result) if read_result.get("success") else {}
     else:
         logger.warning(f"[PROCESS] Unsupported file type: {extension}")
@@ -418,7 +418,7 @@ async def process_file_batch(*file_paths: str) -> dict:
     logger.info("=" * 80)
 
     # Process all files in parallel
-    # SUBTASK PATTERN: Call multiple subtasks concurrently using asyncio.gather()
+    # TASK CHAINING PATTERN: Chain multiple task runs concurrently via asyncio.gather()
     logger.info("[BATCH] Launching parallel file processing tasks...")
     tasks = [process_single_file(fp) for fp in file_paths_list]
     results = await asyncio.gather(*tasks)

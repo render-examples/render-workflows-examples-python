@@ -3,7 +3,7 @@
 # after scaffolding. You can safely ignore it when using this example directly.
 
 name: Hello World
-description: Simple task and subtask basics
+description: Simple task and task-chaining basics
 default: true
 
 workflowsRoot: .
@@ -14,7 +14,7 @@ renderStartCommand: python main.py
 nextSteps:
   - label: Enter your project directory
     command: cd {{dir}}
-  - label: Start your local task server
+  - label: Start your local workflow service
     command: render workflows dev -- {{startCommand}}
     hint: This runs your workflow service locally, allowing you to view and run tasks without deploying to Render.
   - label: Run a task locally (in another terminal)

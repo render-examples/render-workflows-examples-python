@@ -147,7 +147,7 @@ async def transform_batch(records: list[dict]) -> dict:
     """
     Transform a batch of records by validating each one.
 
-    This demonstrates subtask execution in a loop, processing multiple
+    This demonstrates task chaining in a loop, processing multiple
     records individually while maintaining error tracking.
 
     Args:
@@ -161,11 +161,11 @@ async def transform_batch(records: list[dict]) -> dict:
     valid_records = []
     invalid_records = []
 
-    # Process each record through validation subtask
-    # KEY PATTERN: Calling subtasks in a loop
+    # Process each record by chaining validate_record runs
+    # KEY PATTERN: Task chaining in a loop
     for i, record in enumerate(records, 1):
         logger.info(f"[TRANSFORM] Processing record {i}/{len(records)}")
-        # SUBTASK CALL: Each record is validated by calling validate_record as a subtask
+        # TASK CHAINING: Each record is validated by chaining validate_record
         validated = await validate_record(record)
 
         if validated['is_valid']:
@@ -264,7 +264,7 @@ async def run_etl_pipeline(source_file: str) -> dict:
     2. Transform: Validate and clean records
     3. Load: Compute statistics and prepare for storage
 
-    This demonstrates a full workflow with multiple subtask calls and
+    This demonstrates a full workflow with multiple chained task runs and
     comprehensive error handling.
 
     Args:
@@ -281,20 +281,20 @@ async def run_etl_pipeline(source_file: str) -> dict:
     try:
         # Stage 1: Extract
         logger.info("[PIPELINE] Stage 1/3: EXTRACT")
-        # SUBTASK CALL: Extract data from CSV
+        # TASK CHAINING: Extract data from CSV
         raw_records = await extract_csv_data(source_file)
         logger.info(f"[PIPELINE] Extracted {len(raw_records)} records")
 
         # Stage 2: Transform
         logger.info("[PIPELINE] Stage 2/3: TRANSFORM")
-        # SUBTASK CALL: Transform calls validate_record for each record
+        # TASK CHAINING: Transform chains validate_record for each record
         transform_result = await transform_batch(raw_records)
         logger.info(f"[PIPELINE] Transformation complete: "
                    f"{transform_result['success_rate']:.1%} success rate")
 
         # Stage 3: Load (compute statistics)
         logger.info("[PIPELINE] Stage 3/3: LOAD")
-        # SUBTASK CALL: Compute final statistics
+        # TASK CHAINING: Compute final statistics
         statistics = await compute_statistics(transform_result['valid_records'])
         logger.info("[PIPELINE] Statistics computed")
 

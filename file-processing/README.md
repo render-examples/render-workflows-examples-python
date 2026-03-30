@@ -191,26 +191,20 @@ render = Render()
 # Process a batch of files
 task_run = await render.workflows.run_task(
     "file-processing-workflows/process_file_batch",
-    {
-        "file_paths": [
-            "sample_files/sales_data.csv",
-            "sample_files/config.json",
-            "sample_files/report.txt"
-        ]
-    }
+    [
+        "sample_files/sales_data.csv",
+        "sample_files/config.json",
+        "sample_files/report.txt"
+    ]
 )
-
-result = await task_run
-print(f"Processed {result.results['successful']}/{result.results['total_files']} files")
+print(f"Processed {task_run.results['successful']}/{task_run.results['total_files']} files")
 
 # Generate consolidated report
 report_run = await render.workflows.run_task(
     "file-processing-workflows/generate_consolidated_report",
-    {"batch_result": result.results}
+    {"batch_result": task_run.results}
 )
-
-report = await report_run
-print(f"Report: {report.results['summary']}")
+print(f"Report: {report_run.results['summary']}")
 ```
 
 ## Sample Files
@@ -327,7 +321,7 @@ async def export_to_database(report: dict) -> dict:
 
 ## Important Notes
 
-- **Python-only**: Workflows are only supported in Python via render-sdk
+- **SDK languages**: Workflows support Python and TypeScript; this repo's examples are Python.
 - **No Blueprint Support**: Workflows don't support render.yaml blueprint configuration
 - **File Access**: In production, integrate with cloud storage (S3, GCS) or databases
 - **Retry Logic**: All read operations include retry configuration for transient failures
