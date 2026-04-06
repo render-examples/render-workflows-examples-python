@@ -107,11 +107,6 @@ Use `@app.task(retry=Retry(...))` when transient failures should be retried auto
 - Confirm dependency install completed from `requirements.txt`
 - Confirm Python version is 3.10+
 
-### Retry behavior confusion
-
-- Retries only apply to tasks configured with `Retry`
-- In this example, only `flip_coin` has retry config
-
 ## Resources
 
 - [Render Workflows documentation](https://render.com/docs/workflows)
