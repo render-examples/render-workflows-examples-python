@@ -3,7 +3,7 @@
 # after scaffolding. You can safely ignore it when using this example directly.
 
 name: Hello World
-description: Simple task and subtask basics
+description: Minimal Render Workflows starter template
 default: true
 
 workflowsRoot: .
@@ -18,8 +18,8 @@ nextSteps:
     command: render workflows dev -- {{startCommand}}
     hint: This runs your workflow service locally, allowing you to view and run tasks without deploying to Render.
   - label: Run a task locally (in another terminal)
-    command: "render workflows tasks start double --local --input='[5]'"
-    hint: If you see 10, your tasks are working!
+    command: "render workflows tasks start calculate_square --local --input='{\"a\": 5}'"
+    hint: If you see 25, your tasks are working!
   - label: Deploy your workflow service to Render
     hint: |
       To deploy this workflow to Render, first push this code to a remote repository. Then, create a workflow service from your Render Dashboard, connect it to your repository, and provide the following build and start commands:
