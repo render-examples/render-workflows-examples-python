@@ -52,19 +52,22 @@ Retry policy in this example:
 
 ### Run locally
 
-```bash
-cd hello-world
-pip install -r requirements.txt
-python main.py
-```
+> Make sure you've installed the latest version of the [Render CLI](https://render.com/docs/cli).
 
-To run tasks locally from another terminal:
+1. From this template's root, start the local task server:
 
-```bash
-render workflows tasks start calculate_square --local --input='{"a": 5}'
-render workflows tasks start sum_squares --local --input='{"a": 3, "b": 4}'
-render workflows tasks start flip_coin --local --input='{}'
-```
+    ```bash
+    pip install -r requirements.txt
+    render workflows dev -- python main.py
+    ```
+
+2. In a separate terminal, trigger task runs:
+
+    ```bash
+    render workflows tasks start calculate_square --local --input='{"a": 5}'
+    render workflows tasks start sum_squares --local --input='{"a": 3, "b": 4}'
+    render workflows tasks start flip_coin --local --input='{}'
+    ```
 
 Expected behavior:
 
