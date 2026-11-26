@@ -1,6 +1,6 @@
-# OpenAI Agent Workflow Example
+# OpenAI Agent Loop as Workflow Tasks
 
-An intelligent conversational agent built with OpenAI's SDK and Render Workflows, featuring tool calling and multi-turn conversations.
+A customer support agent built on the OpenAI Responses API with the plain `openai` package. The agent loop is written by hand: every model call and every tool call runs as its own workflow task, so each step is retried and shows up in the Dashboard on its own.
 
 ## Use Case
 
@@ -179,18 +179,18 @@ Task: `multi_turn_conversation`
 
 Input:
 ```json
-{
-  "messages": [
-    "What is your return policy?",
-    "What is the status of order ORD-001?",
-    "Can you process a refund for that order? It arrived damaged."
-  ]
-}
+[
+  "What is your return policy?",
+  "What is the status of order ORD-001?",
+  "Can you process a refund for that order? It arrived damaged."
+]
 ```
+
+`multi_turn_conversation` takes `*messages`, so pass the messages as a list. A dict such as `{"messages": [...]}` fails, because a `*args` parameter can't be passed by name.
 
 This will process all messages in sequence, maintaining context between turns.
 
-**Note:** The agent uses OpenAI GPT-4, so you'll see the AI making intelligent decisions about which tools to call based on the user's message.
+**Note:** The agent uses the model set in `OPENAI_MODEL` (default `gpt-6.2-sol`), so you'll see the AI making intelligent decisions about which tools to call based on the user's message.
 
 ## Triggering via SDK
 
@@ -199,35 +199,36 @@ Once deployed, interact with the agent via the Render API or SDK:
 ```python
 from render import Render
 
-# Uses RENDER_API_KEY environment variable automatically
+# Reads RENDER_API_KEY from the environment. Replace "openai-agent-workflows"
+# with your workflow service's slug.
 render = Render()
 
-# Single turn conversation
-task_run = await render.workflows.run_task(
+# Single turn. Python tasks also accept named arguments as a dict.
+# run_task waits for the run to finish and returns its details.
+run = render.workflows.run_task(
     "openai-agent-workflows/agent_turn",
     {
         "user_message": "What is the status of order ORD-001?",
-        "conversation_history": []
-    }
+        "conversation_history": [],
+    },
 )
+if run.status == "completed":
+    print(f"Agent: {run.results[0]['response']}")
+else:
+    print(f"Run {run.id} ended as {run.status}: {run.error}")
 
-result = await task_run
-print(f"Agent: {result.results['response']}")
-
-# Multi-turn conversation
-task_run = await render.workflows.run_task(
+# Multi-turn. multi_turn_conversation takes *messages, so pass a list.
+run = render.workflows.run_task(
     "openai-agent-workflows/multi_turn_conversation",
-    {
-        "messages": [
-            "What is your return policy?",
-            "What is the status of order ORD-001?",
-            "Can you process a refund for that order? It arrived damaged."
-        ]
-    }
+    [
+        "What is your return policy?",
+        "What is the status of order ORD-001?",
+        "Can you process a refund for that order? It arrived damaged.",
+    ],
 )
 
-result = await task_run
-for turn in result.results['turns']:
+# results is a list holding the task's return value
+for turn in run.results[0]["turns"]:
     print(f"User: {turn['user']}")
     print(f"Agent: {turn['assistant']}")
     print(f"Tools used: {[t['tool'] for t in turn['tool_calls']]}")
@@ -269,7 +270,7 @@ Searches the knowledge base for information.
 
 ### Orchestration Tasks
 
-**`call_llm_with_tools`**: Calls OpenAI API with tool definitions. The model decides whether to call tools or respond directly.
+**`call_llm_with_tools`**: Calls the OpenAI Responses API with tool definitions. The model decides whether to call tools or respond directly. If OpenAI rejects the request outright (unknown model, invalid key), the task returns an error result instead of raising, so Render doesn't retry it.
 
 **`execute_tool`**: Dynamically executes a tool as a subtask based on the agent's decision:
 ```python
@@ -289,9 +290,9 @@ async def execute_tool(ctx: TaskContext, tool_name: str, arguments: dict) -> dic
 ```
 
 **`agent_turn`**: Executes a single conversation turn with nested subtask execution:
-1. `await ctx.run(call_llm_with_tools, ...)` - Call LLM with user message
-2. If tools requested: `await ctx.run(execute_tool, ...)` for each tool (which then runs the actual tool task)
-3. `await ctx.run(call_llm_with_tools, ...)` again with tool results to generate final response
+1. `await ctx.run(call_llm_with_tools, ...)` - Call LLM with the conversation so far
+2. If tools requested: `await ctx.run(execute_tool, ...)` for each tool (which then runs the actual tool task), then go back to step 1 with the results
+3. Stop when the model answers in text, or after `MAX_TOOL_ROUNDS` rounds
 
 This demonstrates **nested subtask calling**: `agent_turn` → `execute_tool` → `get_order_status` (3 levels deep!).
 
@@ -373,9 +374,7 @@ Agent: "We offer free shipping on orders over $50. Standard shipping takes 3-5 b
 
 ## Important Notes
 
-- **Python-only**: Workflows are only supported in Python via `render`
-- **No Blueprint Support**: Workflows don't support render.yaml blueprint configuration
 - **OpenAI Costs**: Be mindful of API costs when running the agent frequently
-- **Model Selection**: Currently uses GPT-4; can be changed to GPT-3.5-turbo for cost savings
+- **Model Selection**: Set `OPENAI_MODEL` to any model that supports function tools in the Responses API (default `gpt-6.2-sol`)
 - **Tool Safety**: In production, add authorization checks before executing sensitive tools
 - **Rate Limiting**: Consider implementing rate limits for production deployments

@@ -30,10 +30,15 @@ logger = logging.getLogger(__name__)
 _openai_import_error = None
 
 try:
-    from openai import AsyncOpenAI
+    from openai import APIStatusError, AsyncOpenAI
 except ImportError as e:
     _openai_import_error = e
     logger.warning("OpenAI package not installed. Install with: pip install openai")
+
+
+# Read the model from the environment so a retired model is a config change,
+# not a code change.
+DEFAULT_MODEL = os.getenv("OPENAI_MODEL", "gpt-6.2-sol")
 
 
 def create_openai_client() -> "AsyncOpenAI":
@@ -54,7 +59,9 @@ def create_openai_client() -> "AsyncOpenAI":
             "Please set it in your Render environment variables."
         )
 
-    return AsyncOpenAI(api_key=api_key)
+    # Render retries failed task runs, so turn off the client's own retries
+    # to keep one retry policy in charge.
+    return AsyncOpenAI(api_key=api_key, max_retries=0)
 
 
 # Initialize Workflows app with defaults
@@ -62,6 +69,12 @@ app = Workflows(
     default_retry=Retry(max_retries=3, wait_duration_ms=2000, backoff_scaling=2.0),
     default_timeout=300,
 )
+
+# Retries belong on the tasks that call outside systems: the OpenAI API and the
+# tool lookups. Tasks that only orchestrate subtasks don't retry. Retrying one
+# re-runs every subtask below it, which multiplies attempts and repeats side
+# effects, such as a refund that already went through.
+NO_RETRY = Retry(max_retries=0, wait_duration_ms=1000, backoff_scaling=1.5)
 
 
 # ============================================================================
@@ -108,7 +121,9 @@ def get_order_status(ctx: TaskContext, order_id: str) -> dict:
         return {"success": False, "order_id": order_id, "error": "Order not found"}
 
 
-@app.task
+# A refund isn't idempotent: retrying after a failure partway through could
+# refund the order twice. Turn retries off instead of inheriting default_retry.
+@app.task(retry=NO_RETRY)
 def process_refund(ctx: TaskContext, order_id: str, reason: str) -> dict:
     """
     Tool: Process a refund for an order.
@@ -191,63 +206,153 @@ def search_knowledge_base(ctx: TaskContext, query: str) -> dict:
 # Agent Tasks
 # ============================================================================
 
+# Tool definitions in the Responses API format. strict=True makes the model's
+# arguments always match the schema, which requires every property to be
+# listed in "required" and additionalProperties to be false.
+TOOLS = [
+    {
+        "type": "function",
+        "name": "get_order_status",
+        "description": "Look up the status of a customer order by order ID",
+        "strict": True,
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "order_id": {
+                    "type": "string",
+                    "description": "The order ID (e.g., ORD-001)",
+                }
+            },
+            "required": ["order_id"],
+            "additionalProperties": False,
+        },
+    },
+    {
+        "type": "function",
+        "name": "process_refund",
+        "description": "Process a refund for an order",
+        "strict": True,
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "order_id": {
+                    "type": "string",
+                    "description": "The order ID to refund",
+                },
+                "reason": {
+                    "type": "string",
+                    "description": "Reason for the refund",
+                },
+            },
+            "required": ["order_id", "reason"],
+            "additionalProperties": False,
+        },
+    },
+    {
+        "type": "function",
+        "name": "search_knowledge_base",
+        "description": "Search the knowledge base for help articles and information",
+        "strict": True,
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "query": {"type": "string", "description": "The search query"}
+            },
+            "required": ["query"],
+            "additionalProperties": False,
+        },
+    },
+]
+
+SYSTEM_PROMPT = (
+    "You are a helpful customer support agent. You can look up order "
+    "status, process refunds, and search the knowledge base for information. "
+    "Be polite, professional, and helpful. Use tools when necessary to "
+    "assist the customer."
+)
+
+# Upper bound on model -> tools -> model rounds in one turn, so a model that
+# keeps requesting tools can't loop forever.
+MAX_TOOL_ROUNDS = 5
+
+# OpenAI errors that mean the request itself is wrong: unknown model, bad key,
+# invalid input. A retry can't fix them, so call_llm_with_tools returns them as
+# a result instead of raising. Rate limits (429), server errors (5xx) and
+# network errors still raise, so Render retries them.
+PERMANENT_ERROR_STATUSES = {400, 401, 403, 404, 422}
+
 
 @app.task
 async def call_llm_with_tools(
-    ctx: TaskContext, messages: list[dict], tools: list[dict], model: str = "gpt-4"
+    ctx: TaskContext,
+    input_items: list[dict],
+    tools: list[dict],
+    model: str = DEFAULT_MODEL,
 ) -> dict:
     """
-    Call OpenAI with function/tool definitions.
+    Call the OpenAI Responses API with tool definitions.
 
-    This task handles the LLM API call with tool definitions, allowing the
-    model to decide which tools to call.
+    The model either answers in text or asks for one or more tool calls.
 
     Args:
-        messages: Conversation history
+        input_items: The conversation so far, as Responses API input items
         tools: Available tool definitions
         model: OpenAI model to use
 
     Returns:
-        Dictionary with response and any tool calls
+        Dictionary with the model's text, the tool calls it requested, and its
+        raw output items, which the caller sends back on the next call.
+        If the request can't succeed (missing API key, or OpenAI rejects it
+        permanently), a dictionary with an "error" key instead.
     """
     logger.info(f"[AGENT] Calling {model} with {len(tools)} tools available")
 
-    client = create_openai_client()
+    try:
+        client = create_openai_client()
+    except (ImportError, ValueError) as e:
+        # A missing openai package or API key is a setup problem. A retry can't
+        # fix it, so report it as a result like the permanent API errors below.
+        logger.error(f"[AGENT] Not retrying: {e}")
+        return {"error": {"status": None, "message": str(e)}}
 
     try:
-        response = await client.chat.completions.create(
-            model=model, messages=messages, tools=tools, tool_choice="auto"
+        response = await client.responses.create(
+            model=model,
+            instructions=SYSTEM_PROMPT,
+            input=input_items,
+            tools=tools,
         )
-
-        message = response.choices[0].message
-        result = {"content": message.content, "tool_calls": []}
-
-        if message.tool_calls:
-            result["tool_calls"] = [
-                {
-                    "id": tc.id,
-                    "type": "function",
-                    "function": {
-                        "name": tc.function.name,
-                        "arguments": tc.function.arguments,
-                    },
-                }
-                for tc in message.tool_calls
-            ]
-            logger.info(
-                f"[AGENT] Model requested {len(result['tool_calls'])} tool calls"
-            )
-
-        return result
-
-    except Exception as e:
-        logger.error(f"[AGENT] LLM call failed: {e}")
+    except APIStatusError as e:
+        if e.status_code in PERMANENT_ERROR_STATUSES:
+            logger.error(f"[AGENT] OpenAI error {e.status_code}, not retrying: {e.message}")
+            return {"error": {"status": e.status_code, "message": e.message}}
         raise
     finally:
         await client.close()
 
+    # Task results must be JSON-serializable, so convert the SDK's output
+    # objects to plain dicts.
+    output_items = [item.model_dump(exclude_none=True) for item in response.output]
+    tool_calls = [
+        {
+            "call_id": item["call_id"],
+            "name": item["name"],
+            "arguments": item["arguments"],
+        }
+        for item in output_items
+        if item["type"] == "function_call"
+    ]
+    if tool_calls:
+        logger.info(f"[AGENT] Model requested {len(tool_calls)} tool calls")
 
-@app.task
+    return {
+        "output_text": response.output_text,
+        "tool_calls": tool_calls,
+        "output_items": output_items,
+    }
+
+
+@app.task(retry=NO_RETRY)
 async def execute_tool(ctx: TaskContext, tool_name: str, arguments: dict) -> dict:
     """
     Execute a tool function by name.
@@ -294,21 +399,21 @@ async def execute_tool(ctx: TaskContext, tool_name: str, arguments: dict) -> dic
         return {"error": str(e)}
 
 
-@app.task
+@app.task(retry=NO_RETRY)
 async def agent_turn(
     ctx: TaskContext, user_message: str, conversation_history: list[dict] = None
 ) -> dict:
     """
     Execute a single agent turn with tool calling capability.
 
-    This demonstrates:
-    - Multi-turn conversation management
-    - Tool/function calling
-    - Context preservation
+    The model can ask for tools several times in one turn, for example to look
+    up an order and then refund it. Each round runs the requested tools and
+    sends their results back, until the model answers in text or the turn
+    reaches MAX_TOOL_ROUNDS.
 
     Args:
         user_message: The user's message
-        conversation_history: Previous conversation messages
+        conversation_history: Previous user and assistant messages
 
     Returns:
         Dictionary with agent response and updated history
@@ -331,140 +436,67 @@ async def agent_turn(
     if conversation_history is None:
         conversation_history = []
 
-    # Define available tools
-    tools = [
-        {
-            "type": "function",
-            "function": {
-                "name": "get_order_status",
-                "description": "Look up the status of a customer order by order ID",
-                "parameters": {
-                    "type": "object",
-                    "properties": {
-                        "order_id": {
-                            "type": "string",
-                            "description": "The order ID (e.g., ORD-001)",
-                        }
-                    },
-                    "required": ["order_id"],
-                },
-            },
-        },
-        {
-            "type": "function",
-            "function": {
-                "name": "process_refund",
-                "description": "Process a refund for an order",
-                "parameters": {
-                    "type": "object",
-                    "properties": {
-                        "order_id": {
-                            "type": "string",
-                            "description": "The order ID to refund",
-                        },
-                        "reason": {
-                            "type": "string",
-                            "description": "Reason for the refund",
-                        },
-                    },
-                    "required": ["order_id", "reason"],
-                },
-            },
-        },
-        {
-            "type": "function",
-            "function": {
-                "name": "search_knowledge_base",
-                "description": "Search the knowledge base for help articles and information",
-                "parameters": {
-                    "type": "object",
-                    "properties": {
-                        "query": {"type": "string", "description": "The search query"}
-                    },
-                    "required": ["query"],
-                },
-            },
-        },
-    ]
-
-    # System prompt
-    system_message = {
-        "role": "system",
-        "content": (
-            "You are a helpful customer support agent. You can look up order "
-            "status, process refunds, and search the knowledge base for information. "
-            "Be polite, professional, and helpful. Use tools when necessary to "
-            "assist the customer."
-        ),
-    }
-
-    # Build messages
-    messages = (
-        [system_message]
-        + conversation_history
-        + [{"role": "user", "content": user_message}]
-    )
-
-    # Call LLM
-    llm_response = await ctx.run(call_llm_with_tools, messages, tools)
-
-    # If no tool calls, return the response
-    if not llm_response.get("tool_calls"):
-        logger.info("[AGENT TURN] No tool calls, returning response")
-        return {
-            "response": llm_response["content"],
-            "conversation_history": conversation_history
-            + [
-                {"role": "user", "content": user_message},
-                {"role": "assistant", "content": llm_response["content"]},
-            ],
-            "tool_calls": [],
-        }
-
-    # Execute tool calls
-    logger.info(f"[AGENT TURN] Executing {len(llm_response['tool_calls'])} tool calls")
+    # History holds plain user/assistant messages from earlier turns. Within
+    # this turn, input_items also collects tool calls and their outputs.
+    input_items = conversation_history + [{"role": "user", "content": user_message}]
     tool_results = []
 
-    for tool_call in llm_response["tool_calls"]:
-        result = await ctx.run(
-            execute_tool,
-            tool_call["function"]["name"],
-            json.loads(tool_call["function"]["arguments"]),
+    for round_num in range(1, MAX_TOOL_ROUNDS + 1):
+        llm_response = await ctx.run(call_llm_with_tools, input_items, TOOLS)
+
+        if "error" in llm_response:
+            return {
+                "response": None,
+                "error": llm_response["error"],
+                "conversation_history": conversation_history,
+                "tool_calls": tool_results,
+            }
+
+        if not llm_response["tool_calls"]:
+            reply = llm_response["output_text"]
+            break
+
+        logger.info(
+            f"[AGENT TURN] Round {round_num}: "
+            f"executing {len(llm_response['tool_calls'])} tool calls"
         )
-        tool_results.append({"tool": tool_call["function"]["name"], "result": result})
 
-    # Format tool results for LLM
-    tool_messages = [
-        {"role": "tool", "tool_call_id": tc["id"], "content": json.dumps(tr["result"])}
-        for tc, tr in zip(llm_response["tool_calls"], tool_results)
-    ]
-
-    # Get final response from LLM with tool results
-    final_messages = messages + [
-        {
-            "role": "assistant",
-            "content": llm_response.get("content"),
-            "tool_calls": llm_response["tool_calls"],
-        },
-        *tool_messages,
-    ]
-
-    final_response = await ctx.run(call_llm_with_tools, final_messages, tools)
+        # Send the model's own output back so it can see which calls it made,
+        # followed by one function_call_output per call.
+        input_items = input_items + llm_response["output_items"]
+        for call in llm_response["tool_calls"]:
+            result = await ctx.run(
+                execute_tool, call["name"], json.loads(call["arguments"])
+            )
+            tool_results.append({"tool": call["name"], "result": result})
+            input_items.append(
+                {
+                    "type": "function_call_output",
+                    "call_id": call["call_id"],
+                    "output": json.dumps(result),
+                }
+            )
+    else:
+        logger.warning(f"[AGENT TURN] Stopped after {MAX_TOOL_ROUNDS} tool rounds")
+        reply = (
+            "Sorry, I couldn't finish that request. "
+            "Please try again or contact support."
+        )
 
     logger.info("[AGENT TURN] Agent turn complete")
 
     return {
-        "response": final_response["content"],
+        "response": reply,
         "conversation_history": conversation_history
         + [
             {"role": "user", "content": user_message},
-            {"role": "assistant", "content": final_response["content"]},
+            {"role": "assistant", "content": reply},
         ],
         "tool_calls": tool_results,
     }
 
 
-@app.task
+@app.task(retry=NO_RETRY)
 async def multi_turn_conversation(ctx: TaskContext, *messages: str) -> dict:
     """
     Run a multi-turn conversation with the agent.
@@ -494,15 +526,21 @@ async def multi_turn_conversation(ctx: TaskContext, *messages: str) -> dict:
 
         turn_result = await ctx.run(agent_turn, user_message, conversation_history)
 
-        responses.append(
-            {
-                "turn": i,
-                "user": user_message,
-                "assistant": turn_result["response"],
-                "tool_calls": turn_result.get("tool_calls", []),
-            }
-        )
+        turn = {
+            "turn": i,
+            "user": user_message,
+            "assistant": turn_result["response"],
+            "tool_calls": turn_result.get("tool_calls", []),
+        }
 
+        # A permanent error would repeat on every later turn, so stop here.
+        if "error" in turn_result:
+            turn["error"] = turn_result["error"]
+            responses.append(turn)
+            logger.error(f"[CONVERSATION] Stopping after turn {i}: {turn_result['error']}")
+            break
+
+        responses.append(turn)
         conversation_history = turn_result["conversation_history"]
 
     logger.info("=" * 80)
