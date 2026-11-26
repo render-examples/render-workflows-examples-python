@@ -51,7 +51,7 @@ Retry policy in this example:
 
 ### Prerequisites
 
-- Python 3.10+
+- Python 3.11+
 
 ### Run locally
 

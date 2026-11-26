@@ -36,7 +36,7 @@ generate_consolidated_report (final aggregation)
 ## Local Development
 
 ### Prerequisites
-- Python 3.10+
+- Python 3.11+
 
 ### Setup and Run
 
