@@ -36,6 +36,11 @@ except ImportError as e:
     logger.warning("OpenAI package not installed. Install with: pip install openai")
 
 
+# Read the model from the environment so a retired model is a config change,
+# not a code change.
+DEFAULT_MODEL = os.getenv("OPENAI_MODEL", "gpt-5.5")
+
+
 def create_openai_client() -> "AsyncOpenAI":
     """Create a new OpenAI client instance.
 
@@ -194,7 +199,7 @@ def search_knowledge_base(ctx: TaskContext, query: str) -> dict:
 
 @app.task
 async def call_llm_with_tools(
-    ctx: TaskContext, messages: list[dict], tools: list[dict], model: str = "gpt-4"
+    ctx: TaskContext, messages: list[dict], tools: list[dict], model: str = DEFAULT_MODEL
 ) -> dict:
     """
     Call OpenAI with function/tool definitions.
