@@ -30,7 +30,7 @@ logger = logging.getLogger(__name__)
 _openai_import_error = None
 
 try:
-    from openai import AsyncOpenAI
+    from openai import APIStatusError, AsyncOpenAI
 except ImportError as e:
     _openai_import_error = e
     logger.warning("OpenAI package not installed. Install with: pip install openai")
@@ -59,7 +59,9 @@ def create_openai_client() -> "AsyncOpenAI":
             "Please set it in your Render environment variables."
         )
 
-    return AsyncOpenAI(api_key=api_key)
+    # Render retries failed task runs, so turn off the client's own retries
+    # to keep one retry policy in charge.
+    return AsyncOpenAI(api_key=api_key, max_retries=0)
 
 
 # Initialize Workflows app with defaults
@@ -265,6 +267,12 @@ SYSTEM_PROMPT = (
 # keeps requesting tools can't loop forever.
 MAX_TOOL_ROUNDS = 5
 
+# OpenAI errors that mean the request itself is wrong: unknown model, bad key,
+# invalid input. A retry can't fix them, so call_llm_with_tools returns them as
+# a result instead of raising. Rate limits (429), server errors (5xx) and
+# network errors still raise, so Render retries them.
+PERMANENT_ERROR_STATUSES = {400, 401, 403, 404, 422}
+
 
 @app.task
 async def call_llm_with_tools(
@@ -286,6 +294,8 @@ async def call_llm_with_tools(
     Returns:
         Dictionary with the model's text, the tool calls it requested, and its
         raw output items, which the caller sends back on the next call.
+        If OpenAI rejects the request permanently, a dictionary with an
+        "error" key instead.
     """
     logger.info(f"[AGENT] Calling {model} with {len(tools)} tools available")
 
@@ -298,6 +308,11 @@ async def call_llm_with_tools(
             input=input_items,
             tools=tools,
         )
+    except APIStatusError as e:
+        if e.status_code in PERMANENT_ERROR_STATUSES:
+            logger.error(f"[AGENT] OpenAI error {e.status_code}, not retrying: {e.message}")
+            return {"error": {"status": e.status_code, "message": e.message}}
+        raise
     finally:
         await client.close()
 
@@ -415,6 +430,14 @@ async def agent_turn(
     for round_num in range(1, MAX_TOOL_ROUNDS + 1):
         llm_response = await ctx.run(call_llm_with_tools, input_items, TOOLS)
 
+        if "error" in llm_response:
+            return {
+                "response": None,
+                "error": llm_response["error"],
+                "conversation_history": conversation_history,
+                "tool_calls": tool_results,
+            }
+
         if not llm_response["tool_calls"]:
             reply = llm_response["output_text"]
             break
@@ -489,15 +512,21 @@ async def multi_turn_conversation(ctx: TaskContext, *messages: str) -> dict:
 
         turn_result = await ctx.run(agent_turn, user_message, conversation_history)
 
-        responses.append(
-            {
-                "turn": i,
-                "user": user_message,
-                "assistant": turn_result["response"],
-                "tool_calls": turn_result.get("tool_calls", []),
-            }
-        )
+        turn = {
+            "turn": i,
+            "user": user_message,
+            "assistant": turn_result["response"],
+            "tool_calls": turn_result.get("tool_calls", []),
+        }
 
+        # A permanent error would repeat on every later turn, so stop here.
+        if "error" in turn_result:
+            turn["error"] = turn_result["error"]
+            responses.append(turn)
+            logger.error(f"[CONVERSATION] Stopping after turn {i}: {turn_result['error']}")
+            break
+
+        responses.append(turn)
         conversation_history = turn_result["conversation_history"]
 
     logger.info("=" * 80)
