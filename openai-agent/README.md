@@ -179,14 +179,14 @@ Task: `multi_turn_conversation`
 
 Input:
 ```json
-{
-  "messages": [
-    "What is your return policy?",
-    "What is the status of order ORD-001?",
-    "Can you process a refund for that order? It arrived damaged."
-  ]
-}
+[
+  "What is your return policy?",
+  "What is the status of order ORD-001?",
+  "Can you process a refund for that order? It arrived damaged."
+]
 ```
+
+`multi_turn_conversation` takes `*messages`, so pass the messages as a list. A dict such as `{"messages": [...]}` fails, because a `*args` parameter can't be passed by name.
 
 This will process all messages in sequence, maintaining context between turns.
 
@@ -199,35 +199,36 @@ Once deployed, interact with the agent via the Render API or SDK:
 ```python
 from render import Render
 
-# Uses RENDER_API_KEY environment variable automatically
+# Reads RENDER_API_KEY from the environment. Replace "openai-agent-workflows"
+# with your workflow service's slug.
 render = Render()
 
-# Single turn conversation
-task_run = await render.workflows.run_task(
+# Single turn. Python tasks also accept named arguments as a dict.
+# run_task waits for the run to finish and returns its details.
+run = render.workflows.run_task(
     "openai-agent-workflows/agent_turn",
     {
         "user_message": "What is the status of order ORD-001?",
-        "conversation_history": []
-    }
+        "conversation_history": [],
+    },
 )
+if run.status == "completed":
+    print(f"Agent: {run.results[0]['response']}")
+else:
+    print(f"Run {run.id} ended as {run.status}: {run.error}")
 
-result = await task_run
-print(f"Agent: {result.results['response']}")
-
-# Multi-turn conversation
-task_run = await render.workflows.run_task(
+# Multi-turn. multi_turn_conversation takes *messages, so pass a list.
+run = render.workflows.run_task(
     "openai-agent-workflows/multi_turn_conversation",
-    {
-        "messages": [
-            "What is your return policy?",
-            "What is the status of order ORD-001?",
-            "Can you process a refund for that order? It arrived damaged."
-        ]
-    }
+    [
+        "What is your return policy?",
+        "What is the status of order ORD-001?",
+        "Can you process a refund for that order? It arrived damaged.",
+    ],
 )
 
-result = await task_run
-for turn in result.results['turns']:
+# results is a list holding the task's return value
+for turn in run.results[0]["turns"]:
     print(f"User: {turn['user']}")
     print(f"Agent: {turn['assistant']}")
     print(f"Tools used: {[t['tool'] for t in turn['tool_calls']]}")
@@ -373,8 +374,6 @@ Agent: "We offer free shipping on orders over $50. Standard shipping takes 3-5 b
 
 ## Important Notes
 
-- **Python-only**: Workflows are only supported in Python via `render`
-- **No Blueprint Support**: Workflows don't support render.yaml blueprint configuration
 - **OpenAI Costs**: Be mindful of API costs when running the agent frequently
 - **Model Selection**: Set `OPENAI_MODEL` to any model that supports function tools in the Responses API (default `gpt-6.2-sol`)
 - **Tool Safety**: In production, add authorization checks before executing sensitive tools
