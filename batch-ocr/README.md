@@ -56,7 +56,7 @@ In another terminal, OCR one document. Task input is a JSON array of the task's 
 render workflows tasks runs start ocr_document --local --input='["invoice-1042.pdf"]'
 ```
 
-OCR the four samples at once. `corrupt.pdf` isn't a valid PDF, so it comes back under `failed` after one attempt:
+OCR four of the samples at once. `corrupt.pdf` isn't a valid PDF, so it comes back under `failed` after one attempt:
 
 ```bash
 render workflows tasks runs start ocr_batch --local \
@@ -91,6 +91,7 @@ Docker-based workflow services can only be created in the Render Dashboard, not 
    There's no Build Command for Docker-based workflows: the `Dockerfile` does the build.
 
 4. Create the workflow. Once the first version is ready, run `ocr_batch` from the Dashboard with `[["invoice-1042.pdf", "delivery-receipt-2207.pdf", "plan-amendment.pdf", "corrupt.pdf"]]`.
+5. To see an out-of-memory retry, run `ocr_document` with `["site-plan-oversized.pdf"]`. That PDF is 3 KB, but its two pages are 60 inches square: at 300 DPI each one is an 18,000 × 18,000 pixel image, and Tesseract needs about 3.5 GB to read it. Two pages at once don't fit in `2c-4g`'s 4 GB, so the kernel kills `tesseract`, the task raises `tesseract was killed by signal 9`, and Render retries the run. Every attempt runs out of memory the same way, so the run fails after three attempts. With `OCR_PAGE_WORKERS=1`, the same document fits and returns its text.
 
 `ocr_document` runs on the `2c-4g` plan, which bills per second of each run. See [compute plans](https://render.com/docs/workflows-limits#compute-plans).
 
@@ -126,7 +127,7 @@ In your own app, upload each scan to object storage and pass a presigned `https:
 - **Chained runs are rate limited.** A workspace can start 1,000 chained runs per minute. Over that, `ctx.run` fails instead of queueing. `ocr_batch` starts `BATCH_CHUNK_SIZE` runs (default 20), waits for them, then starts the next chunk. A document whose run couldn't start is listed under `failed`. See [rate limits](https://render.com/docs/workflows-limits#chained-runs).
 - **Timeouts apply per attempt.** Each attempt of `ocr_document` gets 600 seconds and each retry gets a fresh 600. `ocr_batch` gets 3,600 seconds for the whole batch: every chunk lasts as long as its slowest document, retries included. Raise it for bigger batches. See [timeouts](https://render.com/docs/workflows-defining-tasks#timeout).
 - **A retry reruns the whole document.** Retries start over on a new instance, so a 50-page PDF that fails on page 49 is OCRed again from page 1. Reading and OCR have no side effects, so that's safe. See [retries](https://render.com/docs/workflows-defining-tasks#retry-settings).
-- **Retries only help when the next attempt can pass.** An out-of-memory kill caused by one huge page will happen again on the same plan. If a document fails on every attempt with `killed by signal 9`, lower `OCR_DPI`, lower `OCR_PAGE_WORKERS` or move `ocr_document` to a plan with more memory.
+- **Retries only help when the next attempt can pass.** An out-of-memory kill caused by huge pages happens again on the same plan, as `site-plan-oversized.pdf` shows. If a document fails on every attempt with `killed by signal 9`, lower `OCR_DPI`, lower `OCR_PAGE_WORKERS` or move `ocr_document` to a plan with more memory.
 - **OCR isn't exact.** Tesseract misreads some characters, especially on noisy scans. Check the fields you depend on.
 
 ## Links
