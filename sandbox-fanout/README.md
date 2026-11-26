@@ -81,7 +81,7 @@ A job's script reads `input.csv` from its working directory and writes its resul
    | Root Directory | `sandbox-fanout` (the folder that holds `main.py`). Leave it empty if this folder is the repository root. |
    | Build Command | `pip install -r requirements.txt` |
    | Start Command | `python main.py` |
-   | Region | Any. Sandboxes run in Oregon, so Oregon keeps file copies short. |
+   | Region | Any. Sandboxes currently run only in Oregon. |
    | Environment variables | `RENDER_API_KEY` and `RENDER_WORKSPACE_ID`, and optionally `MAX_SANDBOXES` and `JOB_TIMEOUT_SECONDS` |
 
 4. Create the workflow. Once the first version is ready, run `run_batch` from the Dashboard with the contents of `jobs.json` wrapped in a JSON array.
