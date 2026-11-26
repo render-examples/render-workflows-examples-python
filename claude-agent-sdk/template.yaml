@@ -1,0 +1,30 @@
+# This file is used by `render workflows init` to scaffold new projects.
+# It tells the CLI how to display this template and what instructions to show
+# after scaffolding. You can safely ignore it when using this example directly.
+
+name: Claude Agent SDK
+description: Support-ticket triage agent built with the Claude Agent SDK, run as a workflow task
+
+workflowsRoot: .
+
+renderBuildCommand: pip install -r requirements.txt
+renderStartCommand: python main.py
+
+nextSteps:
+  - label: Enter your project directory
+    command: cd {{dir}}
+  - label: Add your Anthropic API key
+    command: cp .env.example .env
+    hint: Then set ANTHROPIC_API_KEY in .env. The local task server loads .env when it starts, so do this first.
+  - label: Start your local task server
+    command: render workflows dev -- {{startCommand}}
+    hint: This runs your workflow service locally, allowing you to view and run tasks without deploying to Render.
+  - label: Triage a ticket locally (in another terminal)
+    command: "render workflows tasks runs start triage_ticket --local --input='[{\"id\": \"TCK-1001\", \"account_id\": \"ACC-100\", \"order_id\": \"ORD-2001\", \"subject\": \"Charged twice for my order\", \"body\": \"I was charged two times for order ORD-2001 yesterday.\"}]'"
+    hint: The agent checks the order and account with its tools, then returns a structured resolution with a category, priority, next steps, and a customer reply.
+  - label: Deploy your workflow service to Render
+    hint: |
+      To deploy this workflow to Render, first push this code to a remote repository. Then, create a workflow service from your Render Dashboard, connect it to your repository, and provide the following build and start commands:
+      • Build command: {{renderBuildCommand}}
+      • Start command: {{renderStartCommand}}
+      Set ANTHROPIC_API_KEY (and optionally ANTHROPIC_MODEL) as environment variables during service creation.
