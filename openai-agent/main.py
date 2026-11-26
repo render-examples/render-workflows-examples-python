@@ -296,12 +296,18 @@ async def call_llm_with_tools(
     Returns:
         Dictionary with the model's text, the tool calls it requested, and its
         raw output items, which the caller sends back on the next call.
-        If OpenAI rejects the request permanently, a dictionary with an
-        "error" key instead.
+        If the request can't succeed (missing API key, or OpenAI rejects it
+        permanently), a dictionary with an "error" key instead.
     """
     logger.info(f"[AGENT] Calling {model} with {len(tools)} tools available")
 
-    client = create_openai_client()
+    try:
+        client = create_openai_client()
+    except (ImportError, ValueError) as e:
+        # A missing openai package or API key is a setup problem. A retry can't
+        # fix it, so report it as a result like the permanent API errors below.
+        logger.error(f"[AGENT] Not retrying: {e}")
+        return {"error": {"status": None, "message": str(e)}}
 
     try:
         response = await client.responses.create(
