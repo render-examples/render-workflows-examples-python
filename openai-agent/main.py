@@ -38,7 +38,7 @@ except ImportError as e:
 
 # Read the model from the environment so a retired model is a config change,
 # not a code change.
-DEFAULT_MODEL = os.getenv("OPENAI_MODEL", "gpt-5.5")
+DEFAULT_MODEL = os.getenv("OPENAI_MODEL", "gpt-6.2-sol")
 
 
 def create_openai_client() -> "AsyncOpenAI":
@@ -196,60 +196,127 @@ def search_knowledge_base(ctx: TaskContext, query: str) -> dict:
 # Agent Tasks
 # ============================================================================
 
+# Tool definitions in the Responses API format. strict=True makes the model's
+# arguments always match the schema, which requires every property to be
+# listed in "required" and additionalProperties to be false.
+TOOLS = [
+    {
+        "type": "function",
+        "name": "get_order_status",
+        "description": "Look up the status of a customer order by order ID",
+        "strict": True,
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "order_id": {
+                    "type": "string",
+                    "description": "The order ID (e.g., ORD-001)",
+                }
+            },
+            "required": ["order_id"],
+            "additionalProperties": False,
+        },
+    },
+    {
+        "type": "function",
+        "name": "process_refund",
+        "description": "Process a refund for an order",
+        "strict": True,
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "order_id": {
+                    "type": "string",
+                    "description": "The order ID to refund",
+                },
+                "reason": {
+                    "type": "string",
+                    "description": "Reason for the refund",
+                },
+            },
+            "required": ["order_id", "reason"],
+            "additionalProperties": False,
+        },
+    },
+    {
+        "type": "function",
+        "name": "search_knowledge_base",
+        "description": "Search the knowledge base for help articles and information",
+        "strict": True,
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "query": {"type": "string", "description": "The search query"}
+            },
+            "required": ["query"],
+            "additionalProperties": False,
+        },
+    },
+]
+
+SYSTEM_PROMPT = (
+    "You are a helpful customer support agent. You can look up order "
+    "status, process refunds, and search the knowledge base for information. "
+    "Be polite, professional, and helpful. Use tools when necessary to "
+    "assist the customer."
+)
+
 
 @app.task
 async def call_llm_with_tools(
-    ctx: TaskContext, messages: list[dict], tools: list[dict], model: str = DEFAULT_MODEL
+    ctx: TaskContext,
+    input_items: list[dict],
+    tools: list[dict],
+    model: str = DEFAULT_MODEL,
 ) -> dict:
     """
-    Call OpenAI with function/tool definitions.
+    Call the OpenAI Responses API with tool definitions.
 
-    This task handles the LLM API call with tool definitions, allowing the
-    model to decide which tools to call.
+    The model either answers in text or asks for one or more tool calls.
 
     Args:
-        messages: Conversation history
+        input_items: The conversation so far, as Responses API input items
         tools: Available tool definitions
         model: OpenAI model to use
 
     Returns:
-        Dictionary with response and any tool calls
+        Dictionary with the model's text, the tool calls it requested, and its
+        raw output items, which the caller sends back on the next call.
     """
     logger.info(f"[AGENT] Calling {model} with {len(tools)} tools available")
 
     client = create_openai_client()
 
     try:
-        response = await client.chat.completions.create(
-            model=model, messages=messages, tools=tools, tool_choice="auto"
+        response = await client.responses.create(
+            model=model,
+            instructions=SYSTEM_PROMPT,
+            input=input_items,
+            tools=tools,
         )
-
-        message = response.choices[0].message
-        result = {"content": message.content, "tool_calls": []}
-
-        if message.tool_calls:
-            result["tool_calls"] = [
-                {
-                    "id": tc.id,
-                    "type": "function",
-                    "function": {
-                        "name": tc.function.name,
-                        "arguments": tc.function.arguments,
-                    },
-                }
-                for tc in message.tool_calls
-            ]
-            logger.info(
-                f"[AGENT] Model requested {len(result['tool_calls'])} tool calls"
-            )
-
-        return result
-
-    except Exception as e:
-        logger.error(f"[AGENT] LLM call failed: {e}")
-        raise
     finally:
         await client.close()
+
+    # Task results must be JSON-serializable, so convert the SDK's output
+    # objects to plain dicts.
+    output_items = [item.model_dump(exclude_none=True) for item in response.output]
+    tool_calls = [
+        {
+            "call_id": item["call_id"],
+            "name": item["name"],
+            "arguments": item["arguments"],
+        }
+        for item in output_items
+        if item["type"] == "function_call"
+    ]
+    if tool_calls:
+        logger.info(f"[AGENT] Model requested {len(tool_calls)} tool calls")
+
+    return {
+        "output_text": response.output_text,
+        "tool_calls": tool_calls,
+        "output_items": output_items,
+    }
 
 
 @app.task
@@ -313,7 +380,7 @@ async def agent_turn(
 
     Args:
         user_message: The user's message
-        conversation_history: Previous conversation messages
+        conversation_history: Previous user and assistant messages
 
     Returns:
         Dictionary with agent response and updated history
@@ -336,92 +403,22 @@ async def agent_turn(
     if conversation_history is None:
         conversation_history = []
 
-    # Define available tools
-    tools = [
-        {
-            "type": "function",
-            "function": {
-                "name": "get_order_status",
-                "description": "Look up the status of a customer order by order ID",
-                "parameters": {
-                    "type": "object",
-                    "properties": {
-                        "order_id": {
-                            "type": "string",
-                            "description": "The order ID (e.g., ORD-001)",
-                        }
-                    },
-                    "required": ["order_id"],
-                },
-            },
-        },
-        {
-            "type": "function",
-            "function": {
-                "name": "process_refund",
-                "description": "Process a refund for an order",
-                "parameters": {
-                    "type": "object",
-                    "properties": {
-                        "order_id": {
-                            "type": "string",
-                            "description": "The order ID to refund",
-                        },
-                        "reason": {
-                            "type": "string",
-                            "description": "Reason for the refund",
-                        },
-                    },
-                    "required": ["order_id", "reason"],
-                },
-            },
-        },
-        {
-            "type": "function",
-            "function": {
-                "name": "search_knowledge_base",
-                "description": "Search the knowledge base for help articles and information",
-                "parameters": {
-                    "type": "object",
-                    "properties": {
-                        "query": {"type": "string", "description": "The search query"}
-                    },
-                    "required": ["query"],
-                },
-            },
-        },
-    ]
-
-    # System prompt
-    system_message = {
-        "role": "system",
-        "content": (
-            "You are a helpful customer support agent. You can look up order "
-            "status, process refunds, and search the knowledge base for information. "
-            "Be polite, professional, and helpful. Use tools when necessary to "
-            "assist the customer."
-        ),
-    }
-
-    # Build messages
-    messages = (
-        [system_message]
-        + conversation_history
-        + [{"role": "user", "content": user_message}]
-    )
+    # History holds plain user/assistant messages from earlier turns. Within
+    # this turn, input_items also collects tool calls and their outputs.
+    input_items = conversation_history + [{"role": "user", "content": user_message}]
 
     # Call LLM
-    llm_response = await ctx.run(call_llm_with_tools, messages, tools)
+    llm_response = await ctx.run(call_llm_with_tools, input_items, TOOLS)
 
     # If no tool calls, return the response
-    if not llm_response.get("tool_calls"):
+    if not llm_response["tool_calls"]:
         logger.info("[AGENT TURN] No tool calls, returning response")
         return {
-            "response": llm_response["content"],
+            "response": llm_response["output_text"],
             "conversation_history": conversation_history
             + [
                 {"role": "user", "content": user_message},
-                {"role": "assistant", "content": llm_response["content"]},
+                {"role": "assistant", "content": llm_response["output_text"]},
             ],
             "tool_calls": [],
         }
@@ -430,40 +427,31 @@ async def agent_turn(
     logger.info(f"[AGENT TURN] Executing {len(llm_response['tool_calls'])} tool calls")
     tool_results = []
 
-    for tool_call in llm_response["tool_calls"]:
-        result = await ctx.run(
-            execute_tool,
-            tool_call["function"]["name"],
-            json.loads(tool_call["function"]["arguments"]),
+    # Send the model's own output back so it can see which calls it made,
+    # followed by one function_call_output per call.
+    input_items = input_items + llm_response["output_items"]
+    for call in llm_response["tool_calls"]:
+        result = await ctx.run(execute_tool, call["name"], json.loads(call["arguments"]))
+        tool_results.append({"tool": call["name"], "result": result})
+        input_items.append(
+            {
+                "type": "function_call_output",
+                "call_id": call["call_id"],
+                "output": json.dumps(result),
+            }
         )
-        tool_results.append({"tool": tool_call["function"]["name"], "result": result})
-
-    # Format tool results for LLM
-    tool_messages = [
-        {"role": "tool", "tool_call_id": tc["id"], "content": json.dumps(tr["result"])}
-        for tc, tr in zip(llm_response["tool_calls"], tool_results)
-    ]
 
     # Get final response from LLM with tool results
-    final_messages = messages + [
-        {
-            "role": "assistant",
-            "content": llm_response.get("content"),
-            "tool_calls": llm_response["tool_calls"],
-        },
-        *tool_messages,
-    ]
-
-    final_response = await ctx.run(call_llm_with_tools, final_messages, tools)
+    final_response = await ctx.run(call_llm_with_tools, input_items, TOOLS)
 
     logger.info("[AGENT TURN] Agent turn complete")
 
     return {
-        "response": final_response["content"],
+        "response": final_response["output_text"],
         "conversation_history": conversation_history
         + [
             {"role": "user", "content": user_message},
-            {"role": "assistant", "content": final_response["content"]},
+            {"role": "assistant", "content": final_response["output_text"]},
         ],
         "tool_calls": tool_results,
     }
