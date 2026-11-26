@@ -22,6 +22,7 @@ Render Workflows support both Python and TypeScript. This repo contains Python e
 | [**File Processing**](./file-processing/) | Batch process multiple file formats in parallel | Parallel execution with `asyncio.gather()`, multi-format handling, aggregation | None |
 | [**Data Pipeline**](./data-pipeline/) | Multi-source customer analytics pipeline | Parallel extraction, data enrichment, combining parallel + sequential patterns | `httpx` |
 | [**File Analyzer**](./file-analyzer/) | API service calling workflow tasks for file analysis | Client SDK + Task SDK, workflow slugs, service separation, FastAPI integration | `fastapi`, `uvicorn` |
+| [**Pi coding agent**](./pi-agent/) | Coding agent that fixes a support ticket in a cloned repo | TypeScript only: Pi's SDK has no Python package. Points to the TypeScript example | None |
 
 ### 1. Hello World
 
@@ -98,3 +99,11 @@ Complete Client SDK + Task SDK integration — a file analysis API with separate
 The only example that shows both Task SDK and Client SDK together — ideal for understanding how to build APIs that call workflow tasks.
 
 [View File Analyzer Example →](./file-analyzer/)
+
+### 7. Pi coding agent (TypeScript only)
+
+Run the Pi coding agent inside a workflow task: clone a repository, fix the bug behind a support ticket, and return the change as a patch or a pushed branch.
+
+Pi's SDK runs in Node.js and has no Python package, so this example lives in the TypeScript examples repository. The folder here points to it.
+
+[View Pi coding agent Example →](./pi-agent/)
