@@ -1,0 +1,36 @@
+# This file is used by `render workflows init` to scaffold new projects.
+# It tells the CLI how to display this template and what instructions to show
+# after scaffolding. You can safely ignore it when using this example directly.
+
+name: AI Chat Turns
+description: Chat app where each turn runs as a workflow task, with a FastAPI service and Postgres
+
+workflowsRoot: .
+
+renderBuildCommand: pip install -r requirements.txt
+renderStartCommand: python workflow.py
+
+nextSteps:
+  - label: Enter your project directory
+    command: cd {{dir}}
+  - label: Create a local database
+    command: createdb ai_chat_turns
+    hint: Needs a local Postgres. The API creates the tables when it starts.
+  - label: Add your settings
+    command: cp .env.example .env
+    hint: Then set OPENAI_API_KEY and DATABASE_URL in .env. The local task server loads .env when it starts, so do this first.
+  - label: Start your local task server
+    command: render workflows dev -- {{startCommand}}
+    hint: This runs the workflow service locally, allowing you to run chat turns without deploying to Render.
+  - label: Start the API (in another terminal)
+    command: RENDER_USE_LOCAL_DEV=true .venv/bin/python -m uvicorn api:app --env-file .env --port 8000
+    hint: RENDER_USE_LOCAL_DEV points the API's Render client at your local task server.
+  - label: Chat (in a third terminal)
+    command: .venv/bin/python chat.py
+    hint: Opens a conversation from a sample support ticket and sends a follow-up.
+  - label: Deploy to Render
+    hint: |
+      Push this code to a Git repository, then create three resources in the Render Dashboard:
+      • A Postgres database.
+      • A workflow service. Build command: {{renderBuildCommand}}. Start command: {{renderStartCommand}}. Environment: DATABASE_URL (the database's internal URL), OPENAI_API_KEY.
+      • A web service. Same build command. Start command: uvicorn api:app --host 0.0.0.0 --port $PORT. Environment: DATABASE_URL, RENDER_API_KEY, WORKFLOW_SLUG (the workflow service's slug).
