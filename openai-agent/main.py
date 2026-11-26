@@ -261,6 +261,10 @@ SYSTEM_PROMPT = (
     "assist the customer."
 )
 
+# Upper bound on model -> tools -> model rounds in one turn, so a model that
+# keeps requesting tools can't loop forever.
+MAX_TOOL_ROUNDS = 5
+
 
 @app.task
 async def call_llm_with_tools(
@@ -373,10 +377,10 @@ async def agent_turn(
     """
     Execute a single agent turn with tool calling capability.
 
-    This demonstrates:
-    - Multi-turn conversation management
-    - Tool/function calling
-    - Context preservation
+    The model can ask for tools several times in one turn, for example to look
+    up an order and then refund it. Each round runs the requested tools and
+    sends their results back, until the model answers in text or the turn
+    reaches MAX_TOOL_ROUNDS.
 
     Args:
         user_message: The user's message
@@ -406,52 +410,50 @@ async def agent_turn(
     # History holds plain user/assistant messages from earlier turns. Within
     # this turn, input_items also collects tool calls and their outputs.
     input_items = conversation_history + [{"role": "user", "content": user_message}]
-
-    # Call LLM
-    llm_response = await ctx.run(call_llm_with_tools, input_items, TOOLS)
-
-    # If no tool calls, return the response
-    if not llm_response["tool_calls"]:
-        logger.info("[AGENT TURN] No tool calls, returning response")
-        return {
-            "response": llm_response["output_text"],
-            "conversation_history": conversation_history
-            + [
-                {"role": "user", "content": user_message},
-                {"role": "assistant", "content": llm_response["output_text"]},
-            ],
-            "tool_calls": [],
-        }
-
-    # Execute tool calls
-    logger.info(f"[AGENT TURN] Executing {len(llm_response['tool_calls'])} tool calls")
     tool_results = []
 
-    # Send the model's own output back so it can see which calls it made,
-    # followed by one function_call_output per call.
-    input_items = input_items + llm_response["output_items"]
-    for call in llm_response["tool_calls"]:
-        result = await ctx.run(execute_tool, call["name"], json.loads(call["arguments"]))
-        tool_results.append({"tool": call["name"], "result": result})
-        input_items.append(
-            {
-                "type": "function_call_output",
-                "call_id": call["call_id"],
-                "output": json.dumps(result),
-            }
+    for round_num in range(1, MAX_TOOL_ROUNDS + 1):
+        llm_response = await ctx.run(call_llm_with_tools, input_items, TOOLS)
+
+        if not llm_response["tool_calls"]:
+            reply = llm_response["output_text"]
+            break
+
+        logger.info(
+            f"[AGENT TURN] Round {round_num}: "
+            f"executing {len(llm_response['tool_calls'])} tool calls"
         )
 
-    # Get final response from LLM with tool results
-    final_response = await ctx.run(call_llm_with_tools, input_items, TOOLS)
+        # Send the model's own output back so it can see which calls it made,
+        # followed by one function_call_output per call.
+        input_items = input_items + llm_response["output_items"]
+        for call in llm_response["tool_calls"]:
+            result = await ctx.run(
+                execute_tool, call["name"], json.loads(call["arguments"])
+            )
+            tool_results.append({"tool": call["name"], "result": result})
+            input_items.append(
+                {
+                    "type": "function_call_output",
+                    "call_id": call["call_id"],
+                    "output": json.dumps(result),
+                }
+            )
+    else:
+        logger.warning(f"[AGENT TURN] Stopped after {MAX_TOOL_ROUNDS} tool rounds")
+        reply = (
+            "Sorry, I couldn't finish that request. "
+            "Please try again or contact support."
+        )
 
     logger.info("[AGENT TURN] Agent turn complete")
 
     return {
-        "response": final_response["output_text"],
+        "response": reply,
         "conversation_history": conversation_history
         + [
             {"role": "user", "content": user_message},
-            {"role": "assistant", "content": final_response["output_text"]},
+            {"role": "assistant", "content": reply},
         ],
         "tool_calls": tool_results,
     }
