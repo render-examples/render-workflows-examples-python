@@ -1,2 +1,2 @@
-render>=1.0.1
+render==1.11.0
 httpx>=0.27.0
