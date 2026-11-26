@@ -56,7 +56,7 @@ Intelligent conversational agent — a customer support bot that can answer ques
 - Multi-turn conversations with context
 - Dynamic tool/function calling
 - Stateful workflow management
-- Integration with OpenAI GPT-4
+- Integration with the OpenAI Responses API (model set by `OPENAI_MODEL`)
 - Extensible tool framework
 
 [View OpenAI Agent Example →](./openai-agent/)

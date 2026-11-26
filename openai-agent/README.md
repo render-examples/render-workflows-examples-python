@@ -190,7 +190,7 @@ Input:
 
 This will process all messages in sequence, maintaining context between turns.
 
-**Note:** The agent uses OpenAI GPT-4, so you'll see the AI making intelligent decisions about which tools to call based on the user's message.
+**Note:** The agent uses the model set in `OPENAI_MODEL` (default `gpt-6.2-sol`), so you'll see the AI making intelligent decisions about which tools to call based on the user's message.
 
 ## Triggering via SDK
 
@@ -269,7 +269,7 @@ Searches the knowledge base for information.
 
 ### Orchestration Tasks
 
-**`call_llm_with_tools`**: Calls OpenAI API with tool definitions. The model decides whether to call tools or respond directly.
+**`call_llm_with_tools`**: Calls the OpenAI Responses API with tool definitions. The model decides whether to call tools or respond directly. If OpenAI rejects the request outright (unknown model, invalid key), the task returns an error result instead of raising, so Render doesn't retry it.
 
 **`execute_tool`**: Dynamically executes a tool as a subtask based on the agent's decision:
 ```python
@@ -289,9 +289,9 @@ async def execute_tool(ctx: TaskContext, tool_name: str, arguments: dict) -> dic
 ```
 
 **`agent_turn`**: Executes a single conversation turn with nested subtask execution:
-1. `await ctx.run(call_llm_with_tools, ...)` - Call LLM with user message
-2. If tools requested: `await ctx.run(execute_tool, ...)` for each tool (which then runs the actual tool task)
-3. `await ctx.run(call_llm_with_tools, ...)` again with tool results to generate final response
+1. `await ctx.run(call_llm_with_tools, ...)` - Call LLM with the conversation so far
+2. If tools requested: `await ctx.run(execute_tool, ...)` for each tool (which then runs the actual tool task), then go back to step 1 with the results
+3. Stop when the model answers in text, or after `MAX_TOOL_ROUNDS` rounds
 
 This demonstrates **nested subtask calling**: `agent_turn` → `execute_tool` → `get_order_status` (3 levels deep!).
 
@@ -376,6 +376,6 @@ Agent: "We offer free shipping on orders over $50. Standard shipping takes 3-5 b
 - **Python-only**: Workflows are only supported in Python via `render`
 - **No Blueprint Support**: Workflows don't support render.yaml blueprint configuration
 - **OpenAI Costs**: Be mindful of API costs when running the agent frequently
-- **Model Selection**: Currently uses GPT-4; can be changed to GPT-3.5-turbo for cost savings
+- **Model Selection**: Set `OPENAI_MODEL` to any model that supports function tools in the Responses API (default `gpt-6.2-sol`)
 - **Tool Safety**: In production, add authorization checks before executing sensitive tools
 - **Rate Limiting**: Consider implementing rate limits for production deployments
