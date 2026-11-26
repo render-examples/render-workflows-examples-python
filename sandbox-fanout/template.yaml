@@ -1,0 +1,30 @@
+# This file is used by `render workflows init` to scaffold new projects.
+# It tells the CLI how to display this template and what instructions to show
+# after scaffolding. You can safely ignore it when using this example directly.
+
+name: Sandbox Fan-out
+description: Run untrusted jobs in parallel, one Render Sandbox per job, from a workflow task
+
+workflowsRoot: .
+
+renderBuildCommand: pip install -r requirements.txt
+renderStartCommand: python main.py
+
+nextSteps:
+  - label: Enter your project directory
+    command: cd {{dir}}
+  - label: Add your Render API key and workspace ID
+    command: cp .env.example .env
+    hint: Then set RENDER_API_KEY and RENDER_WORKSPACE_ID in .env. The tasks use them to create sandboxes. The local task server loads .env when it starts, so do this first.
+  - label: Start your local task server
+    command: render workflows dev -- {{startCommand}}
+    hint: This runs your workflow service locally, allowing you to view and run tasks without deploying to Render.
+  - label: Run the sample jobs, one sandbox each (in another terminal)
+    command: render workflows tasks runs start run_batch --local --input="[$(cat jobs.json)]"
+    hint: Three jobs succeed. The average-discount job fails on purpose, is retried in a new sandbox, and is listed under failed. Every sandbox is terminated when its job ends.
+  - label: Deploy your workflow service to Render
+    hint: |
+      To deploy this workflow to Render, first push this code to a remote repository. Then, create a workflow service from your Render Dashboard, connect it to your repository, and provide the following build and start commands:
+      • Build command: {{renderBuildCommand}}
+      • Start command: {{renderStartCommand}}
+      Set RENDER_API_KEY and RENDER_WORKSPACE_ID as environment variables during service creation.

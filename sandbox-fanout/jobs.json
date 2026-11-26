@@ -1,0 +1,22 @@
+[
+  {
+    "id": "revenue-by-region",
+    "input_csv": "order_id,month,region,product,units,amount\n1001,2026-09,west,notebook,3,36.00\n1002,2026-09,east,pen,10,15.00\n1003,2026-09,west,backpack,1,48.00\n1004,2026-10,south,notebook,5,60.00\n1005,2026-10,east,backpack,2,96.00\n1006,2026-10,west,pen,4,6.00\n1007,2026-11,south,pen,12,18.00\n1008,2026-11,east,notebook,1,12.00\n",
+    "script": "import csv, json\ntotals = {}\nfor row in csv.DictReader(open(\"input.csv\")):\n    totals[row[\"region\"]] = round(totals.get(row[\"region\"], 0) + float(row[\"amount\"]), 2)\njson.dump(totals, open(\"output.json\", \"w\"))\n"
+  },
+  {
+    "id": "units-by-product",
+    "input_csv": "order_id,month,region,product,units,amount\n1001,2026-09,west,notebook,3,36.00\n1002,2026-09,east,pen,10,15.00\n1003,2026-09,west,backpack,1,48.00\n1004,2026-10,south,notebook,5,60.00\n1005,2026-10,east,backpack,2,96.00\n1006,2026-10,west,pen,4,6.00\n1007,2026-11,south,pen,12,18.00\n1008,2026-11,east,notebook,1,12.00\n",
+    "script": "import csv, json\nunits = {}\nfor row in csv.DictReader(open(\"input.csv\")):\n    units[row[\"product\"]] = units.get(row[\"product\"], 0) + int(row[\"units\"])\njson.dump(units, open(\"output.json\", \"w\"))\n"
+  },
+  {
+    "id": "orders-by-month",
+    "input_csv": "order_id,month,region,product,units,amount\n1001,2026-09,west,notebook,3,36.00\n1002,2026-09,east,pen,10,15.00\n1003,2026-09,west,backpack,1,48.00\n1004,2026-10,south,notebook,5,60.00\n1005,2026-10,east,backpack,2,96.00\n1006,2026-10,west,pen,4,6.00\n1007,2026-11,south,pen,12,18.00\n1008,2026-11,east,notebook,1,12.00\n",
+    "script": "import csv, json\nfrom collections import Counter\nmonths = Counter(row[\"month\"] for row in csv.DictReader(open(\"input.csv\")))\njson.dump(months, open(\"output.json\", \"w\"))\n"
+  },
+  {
+    "id": "average-discount",
+    "input_csv": "order_id,month,region,product,units,amount\n1001,2026-09,west,notebook,3,36.00\n1002,2026-09,east,pen,10,15.00\n1003,2026-09,west,backpack,1,48.00\n1004,2026-10,south,notebook,5,60.00\n1005,2026-10,east,backpack,2,96.00\n1006,2026-10,west,pen,4,6.00\n1007,2026-11,south,pen,12,18.00\n1008,2026-11,east,notebook,1,12.00\n",
+    "script": "import csv, json\nrows = list(csv.DictReader(open(\"input.csv\")))\naverage = sum(float(row[\"discount\"]) for row in rows) / len(rows)\njson.dump({\"average_discount\": average}, open(\"output.json\", \"w\"))\n"
+  }
+]
