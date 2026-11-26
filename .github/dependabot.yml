@@ -1,0 +1,17 @@
+version: 2
+updates:
+  - package-ecosystem: pip
+    # Every example folder, including file-analyzer's two services
+    directories: ["/**"]
+    schedule:
+      interval: weekly
+    groups:
+      # One pull request per dependency across all examples, so every
+      # example stays on the same version.
+      minor-and-patch:
+        group-by: dependency-name
+        update-types: [minor, patch]
+      # Major versions usually need code changes; each gets its own PR.
+      major:
+        group-by: dependency-name
+        update-types: [major]
