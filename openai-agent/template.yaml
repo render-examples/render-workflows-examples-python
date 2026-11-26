@@ -2,8 +2,8 @@
 # It tells the CLI how to display this template and what instructions to show
 # after scaffolding. You can safely ignore it when using this example directly.
 
-name: OpenAI Agent
-description: AI-powered agent with tool calling and multi-turn conversations
+name: OpenAI Agent Loop
+description: Agent loop on the OpenAI Responses API, with each model call and tool call as its own task
 
 workflowsRoot: .
 

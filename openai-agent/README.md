@@ -1,6 +1,6 @@
-# OpenAI Agent Workflow Example
+# OpenAI Agent Loop as Workflow Tasks
 
-An intelligent conversational agent built with OpenAI's SDK and Render Workflows, featuring tool calling and multi-turn conversations.
+A customer support agent built on the OpenAI Responses API with the plain `openai` package. The agent loop is written by hand: every model call and every tool call runs as its own workflow task, so each step is retried and shows up in the Dashboard on its own.
 
 ## Use Case
 

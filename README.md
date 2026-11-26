@@ -18,7 +18,7 @@ Render Workflows support both Python and TypeScript. This repo contains Python e
 |---------|----------|--------------|-------------------|
 | [**Hello World**](./hello-world/) | Learn workflow basics with simple number processing | Task definition, subtask calling with `ctx.run`, basic orchestration | None |
 | [**ETL Job**](./etl-job/) | Process CSV data with validation and statistics | Subtasks, sequential processing, batch operations, data validation | None |
-| [**OpenAI Agent**](./openai-agent/) | AI customer support agent with tool calling | Tool calling, nested subtasks (3 levels deep), stateful workflows, dynamic orchestration | `openai` |
+| [**OpenAI Agent Loop**](./openai-agent/) | Customer support agent whose loop runs as workflow tasks | Tool calling, nested subtasks (3 levels deep), stateful workflows, dynamic orchestration | `openai` |
 | [**File Processing**](./file-processing/) | Batch process multiple file formats in parallel | Parallel execution with `asyncio.gather()`, multi-format handling, aggregation | None |
 | [**Data Pipeline**](./data-pipeline/) | Multi-source customer analytics pipeline | Parallel extraction, data enrichment, combining parallel + sequential patterns | `httpx` |
 | [**File Analyzer**](./file-analyzer/) | API service calling workflow tasks for file analysis | Client SDK + Task SDK, workflow slugs, service separation, FastAPI integration | `fastapi`, `uvicorn` |
@@ -49,7 +49,7 @@ Complete Extract, Transform, Load pipeline — process customer data from CSV fi
 
 [View ETL Job Example →](./etl-job/)
 
-### 3. OpenAI Agent
+### 3. OpenAI Agent Loop
 
 Intelligent conversational agent — a customer support bot that can answer questions, look up orders, and process refunds.
 
@@ -59,7 +59,7 @@ Intelligent conversational agent — a customer support bot that can answer ques
 - Integration with the OpenAI Responses API (model set by `OPENAI_MODEL`)
 - Extensible tool framework
 
-[View OpenAI Agent Example →](./openai-agent/)
+[View OpenAI Agent Loop Example →](./openai-agent/)
 
 ### 4. File Processing
 
