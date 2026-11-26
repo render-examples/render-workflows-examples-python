@@ -17,7 +17,7 @@ nextSteps:
     command: render workflows dev -- {{startCommand}}
     hint: This runs your workflow service locally, allowing you to view and run tasks without deploying to Render.
   - label: Process a batch of files locally (in another terminal)
-    command: "render workflows tasks start process_file_batch --local --input='[\"sample_files/sales_data.csv\", \"sample_files/config.json\", \"sample_files/report.txt\"]'"
+    command: "render workflows tasks runs start process_file_batch --local --input='[\"sample_files/sales_data.csv\", \"sample_files/config.json\", \"sample_files/report.txt\"]'"
     hint: This processes the three included sample files in parallel and returns an analysis for each.
   - label: Deploy your workflow service to Render
     hint: |

@@ -67,9 +67,9 @@ Retry policy in this example:
 2. In a separate terminal, trigger task runs:
 
     ```bash
-    render workflows tasks start calculate_square --local --input='{"a": 5}'
-    render workflows tasks start sum_squares --local --input='{"a": 3, "b": 4}'
-    render workflows tasks start flip_coin --local --input='{}'
+    render workflows tasks runs start calculate_square --local --input='{"a": 5}'
+    render workflows tasks runs start sum_squares --local --input='{"a": 3, "b": 4}'
+    render workflows tasks runs start flip_coin --local --input='{}'
     ```
 
 Expected behavior:

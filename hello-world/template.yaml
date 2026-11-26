@@ -18,7 +18,7 @@ nextSteps:
     command: render workflows dev -- {{startCommand}}
     hint: This runs your workflow service locally, allowing you to view and run tasks without deploying to Render.
   - label: Run a task locally (in another terminal)
-    command: "render workflows tasks start calculate_square --local --input='{\"a\": 5}'"
+    command: "render workflows tasks runs start calculate_square --local --input='{\"a\": 5}'"
     hint: If you see 25, your tasks are working!
   - label: Deploy your workflow service to Render
     hint: |
