@@ -115,7 +115,9 @@ def get_order_status(ctx: TaskContext, order_id: str) -> dict:
         return {"success": False, "order_id": order_id, "error": "Order not found"}
 
 
-@app.task
+# A refund isn't idempotent: retrying after a failure partway through could
+# refund the order twice. Turn retries off instead of inheriting default_retry.
+@app.task(retry=Retry(max_retries=0, wait_duration_ms=1000, backoff_scaling=1.5))
 def process_refund(ctx: TaskContext, order_id: str, reason: str) -> dict:
     """
     Tool: Process a refund for an order.
