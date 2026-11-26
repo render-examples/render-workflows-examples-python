@@ -22,6 +22,7 @@ Render Workflows support both Python and TypeScript. This repo contains Python e
 | [**File Processing**](./file-processing/) | Batch process multiple file formats in parallel | Parallel execution with `asyncio.gather()`, multi-format handling, aggregation | None |
 | [**Data Pipeline**](./data-pipeline/) | Multi-source customer analytics pipeline | Parallel extraction, data enrichment, combining parallel + sequential patterns | `httpx` |
 | [**File Analyzer**](./file-analyzer/) | API service calling workflow tasks for file analysis | Client SDK + Task SDK, workflow slugs, service separation, FastAPI integration | `fastapi`, `uvicorn` |
+| [**Sandbox Fan-out**](./sandbox-fanout/) | Run untrusted jobs in parallel, one Render Sandbox per job | Sandboxes from a task, deny-all networking, retry in a new sandbox, capped fan-out, cleanup in `finally` | None (`render` only) |
 
 ### 1. Hello World
 
@@ -98,3 +99,15 @@ Complete Client SDK + Task SDK integration — a file analysis API with separate
 The only example that shows both Task SDK and Client SDK together — ideal for understanding how to build APIs that call workflow tasks.
 
 [View File Analyzer Example →](./file-analyzer/)
+
+### 7. Sandbox Fan-out
+
+Run untrusted code safely — a batch of jobs, each a Python script and an input CSV, runs in parallel with one Render Sandbox per job.
+
+- Create, use, and terminate sandboxes from a workflow task with the Render SDK
+- Copy a job's files into a sandbox and its result back out
+- Block all outbound network access for untrusted code
+- Raise on a nonzero exit code so Render retries the job in a new sandbox
+- Cap how many sandboxes run at once, and keep failed jobs in the batch summary
+
+[View Sandbox Fan-out Example →](./sandbox-fanout/)
