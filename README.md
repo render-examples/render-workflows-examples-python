@@ -22,6 +22,7 @@ Render Workflows support both Python and TypeScript. This repo contains Python e
 | [**File Processing**](./file-processing/) | Batch process multiple file formats in parallel | Parallel execution with `asyncio.gather()`, multi-format handling, aggregation | None |
 | [**Data Pipeline**](./data-pipeline/) | Multi-source customer analytics pipeline | Parallel extraction, data enrichment, combining parallel + sequential patterns | `httpx` |
 | [**File Analyzer**](./file-analyzer/) | API service calling workflow tasks for file analysis | Client SDK + Task SDK, workflow slugs, service separation, FastAPI integration | `fastapi`, `uvicorn` |
+| [**OpenAI Agents SDK**](./openai-agents-sdk/) | Support-ticket triage agent with handoffs | Agents SDK inside a task, fan-out per ticket, typed results, retry only the model task | `openai-agents` |
 
 ### 1. Hello World
 
@@ -98,3 +99,16 @@ Complete Client SDK + Task SDK integration — a file analysis API with separate
 The only example that shows both Task SDK and Client SDK together — ideal for understanding how to build APIs that call workflow tasks.
 
 [View File Analyzer Example →](./file-analyzer/)
+
+### 7. OpenAI Agents SDK
+
+Run an agent built with the OpenAI Agents SDK as a workflow task: a support-ticket triage agent that hands off to Billing or Technical Support.
+
+- Agents SDK agent with tools and handoffs, running inside one task run
+- Typed agent output returned as JSON-safe task results
+- One task run per ticket with `ctx.run` and `asyncio.gather`
+- Errors a retry can't fix returned as results instead of raised
+
+The SDK runs the agent loop inside a single task. Compare with OpenAI Agent, where every model call and tool call is its own task.
+
+[View OpenAI Agents SDK Example →](./openai-agents-sdk/)
