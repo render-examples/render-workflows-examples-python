@@ -120,7 +120,9 @@ async def run_tool(*args: str) -> str:
 
     stdout, stderr = await proc.communicate()
     if proc.returncode < 0:
-        # Killed by a signal, for example SIGKILL from the out-of-memory killer.
+        # Killed by a signal, for example SIGKILL from the kernel's out-of-memory
+        # killer. (If the whole run uses up its plan's memory, Render ends the
+        # attempt instead and retries it the same way.)
         # The input may be fine, so raise and let Render retry the document.
         raise RuntimeError(f"{args[0]} was killed by signal {-proc.returncode}")
     if proc.returncode > 0:
