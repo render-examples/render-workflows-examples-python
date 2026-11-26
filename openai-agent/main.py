@@ -70,6 +70,12 @@ app = Workflows(
     default_timeout=300,
 )
 
+# Retries belong on the tasks that call outside systems: the OpenAI API and the
+# tool lookups. Tasks that only orchestrate subtasks don't retry. Retrying one
+# re-runs every subtask below it, which multiplies attempts and repeats side
+# effects, such as a refund that already went through.
+NO_RETRY = Retry(max_retries=0, wait_duration_ms=1000, backoff_scaling=1.5)
+
 
 # ============================================================================
 # Tool Functions - Actions the agent can perform
@@ -117,7 +123,7 @@ def get_order_status(ctx: TaskContext, order_id: str) -> dict:
 
 # A refund isn't idempotent: retrying after a failure partway through could
 # refund the order twice. Turn retries off instead of inheriting default_retry.
-@app.task(retry=Retry(max_retries=0, wait_duration_ms=1000, backoff_scaling=1.5))
+@app.task(retry=NO_RETRY)
 def process_refund(ctx: TaskContext, order_id: str, reason: str) -> dict:
     """
     Tool: Process a refund for an order.
@@ -346,7 +352,7 @@ async def call_llm_with_tools(
     }
 
 
-@app.task
+@app.task(retry=NO_RETRY)
 async def execute_tool(ctx: TaskContext, tool_name: str, arguments: dict) -> dict:
     """
     Execute a tool function by name.
@@ -393,7 +399,7 @@ async def execute_tool(ctx: TaskContext, tool_name: str, arguments: dict) -> dic
         return {"error": str(e)}
 
 
-@app.task
+@app.task(retry=NO_RETRY)
 async def agent_turn(
     ctx: TaskContext, user_message: str, conversation_history: list[dict] = None
 ) -> dict:
@@ -490,7 +496,7 @@ async def agent_turn(
     }
 
 
-@app.task
+@app.task(retry=NO_RETRY)
 async def multi_turn_conversation(ctx: TaskContext, *messages: str) -> dict:
     """
     Run a multi-turn conversation with the agent.
