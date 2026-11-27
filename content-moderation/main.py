@@ -44,8 +44,9 @@ MAX_CONCURRENT_POSTS = int(os.getenv("MAX_CONCURRENT_POSTS", "8"))
 # image is sent base64-encoded, which adds about a third.
 MAX_IMAGE_BYTES = 5_000_000
 
-# Some image hosts, Wikimedia among them, reject requests without one.
-USER_AGENT = "render-workflows-examples/1.0 (content-moderation example)"
+# Some image hosts reject downloads without a User-Agent that says who is
+# asking. Wikimedia's robot policy asks for a contact URL or email in it.
+USER_AGENT = "render-workflows-content-moderation/1.0 (+https://github.com/render-examples)"
 
 # OpenAI errors that mean the request itself is wrong: unknown model, bad key,
 # an image it can't read. A retry can't fix them, so the tasks return them as
