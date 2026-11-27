@@ -22,6 +22,7 @@ Render Workflows support both Python and TypeScript. This repo contains Python e
 | [**File Processing**](./file-processing/) | Batch process multiple file formats in parallel | Parallel execution with `asyncio.gather()`, multi-format handling, aggregation | None |
 | [**Data Pipeline**](./data-pipeline/) | Multi-source customer analytics pipeline | Parallel extraction, data enrichment, combining parallel + sequential patterns | `httpx` |
 | [**File Analyzer**](./file-analyzer/) | API service calling workflow tasks for file analysis | Client SDK + Task SDK, workflow slugs, service separation, FastAPI integration | `fastapi`, `uvicorn` |
+| [**Order Saga**](./order-saga/) | Checkout that refunds and releases stock when a later step fails | Flows with checkpointed steps, replay after a crash, compensating steps, idempotency keys | None |
 
 ### 1. Hello World
 
@@ -98,3 +99,16 @@ Complete Client SDK + Task SDK integration — a file analysis API with separate
 The only example that shows both Task SDK and Client SDK together — ideal for understanding how to build APIs that call workflow tasks.
 
 [View File Analyzer Example →](./file-analyzer/)
+
+### 7. Order Saga
+
+A checkout built as a flow: reserve inventory, charge the payment, create the shipment, and undo the finished steps in reverse when a later one fails for good.
+
+- `@app.flow` and `ctx.step`, with each step's result checkpointed
+- A simulated crash after the charge: Render replays the flow and the finished steps aren't run again
+- Compensating steps (refund, release) that run newest first, after a declined card or a carrier outage
+- Idempotency keys on every call that changes something, and on the flow run
+
+The payment and shipping services are in-process fakes, so it runs with no accounts or keys.
+
+[View Order Saga Example →](./order-saga/)

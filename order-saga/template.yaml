@@ -1,0 +1,27 @@
+# This file is used by `render workflows init` to scaffold new projects.
+# It tells the CLI how to display this template and what instructions to show
+# after scaffolding. You can safely ignore it when using this example directly.
+
+name: Order Saga
+description: Checkout flow that charges, ships, and refunds on failure, with checkpointed steps that survive a crash
+
+workflowsRoot: .
+
+renderBuildCommand: pip install -r requirements.txt
+renderStartCommand: python main.py
+
+nextSteps:
+  - label: Enter your project directory
+    command: cd {{dir}}
+  - label: Start your local task server
+    command: SIMULATE_CRASH=1 render workflows dev -- {{startCommand}}
+    hint: Needs Render CLI 2.37.0 or later to run flows locally. SIMULATE_CRASH=1 lets the order below crash once so you can watch the replay. No API keys needed; the payment and shipping services are in-process fakes.
+  - label: Check out an order that crashes after the charge (in another terminal)
+    command: "render workflows tasks runs start checkout --local --input=\"[$(jq -c '.[3]' orders.json)]\""
+    hint: ORD-3004 is the fourth order in orders.json (jq picks it out). The process exits after charging. The local task server replays the flow, and the reserve and charge steps return their recorded results instead of running again. The other orders in orders.json show a declined card, a carrier outage and a lost payment response.
+  - label: Deploy your workflow service to Render
+    hint: |
+      To deploy this workflow to Render, first push this code to a remote repository. Then, create a workflow service from your Render Dashboard, connect it to your repository, and provide the following build and start commands:
+      • Build command: {{renderBuildCommand}}
+      • Start command: {{renderStartCommand}}
+      No environment variables are needed. Leave SIMULATE_CRASH unset on Render: a process that exits on its own fails the run there instead of replaying.
