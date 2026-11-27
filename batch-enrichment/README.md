@@ -37,9 +37,9 @@ We measured both on Render (November 2026):
 | Cost of a 24-hour wait | About $0.04 at the [flex rates](https://render.com/docs/workflows-limits#the-flex-compute-plan) ($0.20 per CPU-hour, $0.05 per GB-hour) for those measurements | About $0.02 at one check every 5 minutes; more for frequent checks |
 | How Render records it | One attempt | Each retry attempt's recorded duration includes the wait before it. The docs don't say whether that wait is billed |
 | Limits | Timeout up to 24 hours per attempt | `max_retries=1000` and a 24-hour `wait_duration_ms` both registered, and we ran 24 retries. The docs state no maximum |
-| Side effects | Real errors keep their retries | Every check shows up as a failed attempt, real errors share the same retry budget, and a parent task that waits on it keeps running anyway |
+| Side effects | Real errors keep their retries | Every check shows up as a failed attempt, and real errors share the same retry budget. A parent task that awaits it still has an open attempt (status `paused`) for the whole wait |
 
-Both cost cents. The sleep loop is simpler, keeps retries for real failures, and costs about the same, so this example uses it. Retry as poll only gets cheaper when checks are many minutes apart and nothing else is waiting on the result.
+Both cost cents. The sleep loop is simpler, keeps retries for real failures, and costs about the same, so this example uses it. Retry as poll only gets cheaper when checks are many minutes apart, and it doesn't remove the wait from a parent task that awaits it.
 
 Two details make the 24-hour limit fit. OpenAI's only completion window is 24 hours, so a batch reaches a final status (completed, expired, failed or cancelled) about when `wait_for_batch` would time out. Expired batches still return the requests that finished. If a batch runs past that, `enrich_csv` times out. Run it again with the same CSV: `submit_batch` finds the batch it already created, so the rerun waits on that batch and pays for nothing twice.
 

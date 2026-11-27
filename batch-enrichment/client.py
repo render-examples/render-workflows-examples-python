@@ -16,6 +16,10 @@ import time
 
 from render import Render
 
+# A run is finished once it reaches one of these. While enrich_csv waits on a
+# chained run, its status is "paused", so don't treat that as finished.
+FINISHED = {"completed", "failed", "canceled"}
+
 SLUG = os.getenv("WORKFLOW_SLUG", "batch-enrichment")
 csv_url = sys.argv[1] if len(sys.argv) > 1 else None
 
@@ -31,7 +35,7 @@ print(f"Started run {run.id}. Store this ID; you can check it from anywhere.")
 # job or a status page instead of looping.
 while True:
     details = render.workflows.get_task_run(run.id)
-    if details.status not in ("pending", "running"):
+    if details.status in FINISHED:
         break
     print(f"  {details.status}...")
     time.sleep(30)
