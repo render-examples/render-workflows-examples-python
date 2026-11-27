@@ -22,6 +22,7 @@ Render Workflows support both Python and TypeScript. This repo contains Python e
 | [**File Processing**](./file-processing/) | Batch process multiple file formats in parallel | Parallel execution with `asyncio.gather()`, multi-format handling, aggregation | None |
 | [**Data Pipeline**](./data-pipeline/) | Multi-source customer analytics pipeline | Parallel extraction, data enrichment, combining parallel + sequential patterns | `httpx` |
 | [**File Analyzer**](./file-analyzer/) | API service calling workflow tasks for file analysis | Client SDK + Task SDK, workflow slugs, service separation, FastAPI integration | `fastapi`, `uvicorn` |
+| [**Batch OCR**](./batch-ocr/) | OCR over many scanned PDFs with Tesseract and Poppler | Docker-based workflow service, per-task compute plans, fan-out in chunks, error classification | `httpx`, Tesseract, Poppler |
 
 ### 1. Hello World
 
@@ -98,3 +99,14 @@ Complete Client SDK + Task SDK integration — a file analysis API with separate
 The only example that shows both Task SDK and Client SDK together — ideal for understanding how to build APIs that call workflow tasks.
 
 [View File Analyzer Example →](./file-analyzer/)
+
+### 7. Batch OCR
+
+Read the text out of many scanned PDFs, one task run per document, on a workflow service that builds from a Dockerfile.
+
+- Docker-based workflow service with Tesseract and Poppler installed
+- Orchestrator on `flex`, OCR task on `2c-4g`
+- Documents passed by reference (a URL or a file name), never as bytes
+- Bad input returned as a failed result, killed processes and network errors raised so Render retries them
+
+[View Batch OCR Example →](./batch-ocr/)

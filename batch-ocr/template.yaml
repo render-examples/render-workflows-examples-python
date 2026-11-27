@@ -1,0 +1,37 @@
+# This file is used by `render workflows init` to scaffold new projects.
+# It tells the CLI how to display this template and what instructions to show
+# after scaffolding. You can safely ignore it when using this example directly.
+#
+# This example deploys as a Docker-based workflow service (see Dockerfile).
+# template.yaml has no field for Docker, so the build and start commands below
+# are for running locally. Deploy from the Dashboard with Language: Docker.
+
+name: Batch OCR
+description: OCR over many scanned PDFs with Tesseract and Poppler, on a Docker-based workflow service
+
+workflowsRoot: .
+
+renderBuildCommand: pip install -r requirements.txt
+renderStartCommand: python main.py
+
+nextSteps:
+  - label: Enter your project directory
+    command: cd {{dir}}
+  - label: Install Tesseract and Poppler
+    command: brew install tesseract poppler
+    hint: "On Debian or Ubuntu: sudo apt-get install tesseract-ocr poppler-utils. On Render, the Dockerfile installs them."
+  - label: Start your local task server
+    command: render workflows dev -- {{startCommand}}
+    hint: This runs your workflow service locally, allowing you to view and run tasks without deploying to Render.
+  - label: OCR two sample documents locally (in another terminal)
+    command: "render workflows tasks runs start ocr_batch --local --input='[[\"invoice-1042.pdf\", \"corrupt.pdf\"]]'"
+    hint: The invoice comes back as text. corrupt.pdf isn't a valid PDF, so it's listed under failed after one attempt.
+  # Not labelled "Deploy your workflow service to Render": the CLI drops a step
+  # with that label and prints its own `render workflows create` command, which
+  # can only create native-runtime services.
+  - label: Deploy to Render with Docker, from the Dashboard
+    hint: |
+      This example builds from its Dockerfile. Docker-based workflow services can only be created in the Render Dashboard, so don't use the `render workflows create` command below: it creates a native Python service, which doesn't have Tesseract or Poppler. Push this code to a remote repository, then create a workflow service from your Render Dashboard with these settings:
+      • Language: Docker
+      • Dockerfile Path: ./Dockerfile
+      • Start Command: {{renderStartCommand}}
