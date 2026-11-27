@@ -1,0 +1,30 @@
+# This file is used by `render workflows init` to scaffold new projects.
+# It tells the CLI how to display this template and what instructions to show
+# after scaffolding. You can safely ignore it when using this example directly.
+
+name: LLM Evals
+description: Compare OpenAI and Anthropic models on a dataset, with an LLM judge and a scorecard per model
+
+workflowsRoot: .
+
+renderBuildCommand: pip install -r requirements.txt
+renderStartCommand: python main.py
+
+nextSteps:
+  - label: Enter your project directory
+    command: cd {{dir}}
+  - label: Add your OpenAI and Anthropic API keys
+    command: cp .env.example .env
+    hint: Then set OPENAI_API_KEY and ANTHROPIC_API_KEY in .env. EVAL_MODELS and JUDGE_MODEL pick the models. The local task server loads .env when it starts, so do this first.
+  - label: Start your local task server
+    command: render workflows dev -- {{startCommand}}
+    hint: This runs your workflow service locally, allowing you to view and run tasks without deploying to Render.
+  - label: Run the eval locally (in another terminal)
+    command: render workflows tasks runs start run_eval --local --input="[$(cat tickets.json), $(cat cases.json)]"
+    hint: Every model answers every ticket in its own task run, the judge grades each answer, and run_eval returns a scorecard per model.
+  - label: Deploy your workflow service to Render
+    hint: |
+      To deploy this workflow to Render, first push this code to a remote repository. Then, create a workflow service from your Render Dashboard, connect it to your repository, and provide the following build and start commands:
+      • Build command: {{renderBuildCommand}}
+      • Start command: {{renderStartCommand}}
+      Set OPENAI_API_KEY and ANTHROPIC_API_KEY (and optionally EVAL_MODELS, JUDGE_MODEL and MAX_CONCURRENT_PER_PROVIDER) as environment variables during service creation.
