@@ -1,0 +1,57 @@
+{
+  "event": "push",
+  "payload": {
+    "ref": "refs/heads/main",
+    "before": "6113728f27ae82c7b1a177c8d03f9e96e0adf246",
+    "after": "0d1a26e67d8f5eaf1f6ba5c57fc3c7d91ac0fd1c",
+    "created": false,
+    "deleted": false,
+    "forced": false,
+    "commits": [
+      {
+        "id": "1c47a3bd5e1b5f3a3f8c4b2c0f9f7c1d2e3a4b5c",
+        "message": "Add tax to the cart total",
+        "timestamp": "2026-11-27T10:12:00Z",
+        "author": {
+          "name": "Octo Cat",
+          "username": "octocat"
+        },
+        "added": [],
+        "removed": [],
+        "modified": [
+          "cart/total.py"
+        ]
+      },
+      {
+        "id": "0d1a26e67d8f5eaf1f6ba5c57fc3c7d91ac0fd1c",
+        "message": "Test the tax rounding",
+        "timestamp": "2026-11-27T10:14:00Z",
+        "author": {
+          "name": "Octo Cat",
+          "username": "octocat"
+        },
+        "added": [
+          "cart/test_total.py"
+        ],
+        "removed": [],
+        "modified": []
+      }
+    ],
+    "repository": {
+      "id": 100000001,
+      "name": "storefront",
+      "full_name": "acme/storefront",
+      "private": true,
+      "html_url": "https://github.com/acme/storefront",
+      "default_branch": "main"
+    },
+    "pusher": {
+      "name": "octocat"
+    },
+    "sender": {
+      "login": "octocat",
+      "id": 1,
+      "type": "User"
+    }
+  }
+}

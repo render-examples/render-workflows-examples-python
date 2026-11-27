@@ -1,0 +1,37 @@
+# This file is used by `render workflows init` to scaffold new projects.
+# It tells the CLI how to display this template and what instructions to show
+# after scaffolding. You can safely ignore it when using this example directly.
+
+name: Webhook Processing
+description: GitHub webhook receiver that verifies signatures, acks fast, and processes each delivery once in a retrying task, with Postgres
+
+workflowsRoot: .
+
+renderBuildCommand: pip install -r requirements.txt
+renderStartCommand: python workflow.py
+
+nextSteps:
+  - label: Enter your project directory
+    command: cd {{dir}}
+  - label: Create a local database
+    command: createdb webhook_processing
+    hint: Needs a local Postgres. The receiver creates the tables when it starts.
+  - label: Add your settings
+    command: cp .env.example .env
+    hint: Then set DATABASE_URL and GITHUB_WEBHOOK_SECRET in .env (any random string works locally). The local task server loads .env when it starts, so do this first.
+  - label: Start your local task server
+    command: render workflows dev -- {{startCommand}}
+    hint: This runs the workflow service locally.
+  - label: Start the receiver (in another terminal)
+    command: RENDER_USE_LOCAL_DEV=true .venv/bin/python -m uvicorn receiver:app --env-file .env --port 8000
+    hint: RENDER_USE_LOCAL_DEV points the receiver's Render client at your local task server, so it needs no Render API key.
+  - label: Send a signed test delivery (in a third terminal)
+    command: .venv/bin/python send_delivery.py deliveries/issue-opened.json
+    hint: Returns 202 with the run ID. Send it again with --delivery-id <id> to see a redelivery return 200 with "duplicate":true.
+  - label: Deploy to Render
+    hint: |
+      Push this code to a Git repository, then create three resources in the Render Dashboard:
+      • A Postgres database.
+      • A workflow service. Build command: {{renderBuildCommand}}. Start command: {{renderStartCommand}}. Environment: DATABASE_URL (the database's internal URL).
+      • A web service on a paid instance type. Same build command. Start command: uvicorn receiver:app --host 0.0.0.0 --port $PORT. Environment: DATABASE_URL, GITHUB_WEBHOOK_SECRET, RENDER_API_KEY, WORKFLOW_SLUG (the workflow service's slug).
+      Then add a GitHub webhook to https://<your-web-service>.onrender.com/webhooks/github with content type application/json, the same secret, and the Pushes and Issues events.
