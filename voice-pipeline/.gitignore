@@ -1,0 +1,7 @@
+.env
+.venv/
+__pycache__/
+dist/
+.DS_Store
+# The client writes the spoken reply here.
+reply.*
