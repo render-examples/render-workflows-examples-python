@@ -22,6 +22,7 @@ Render Workflows support both Python and TypeScript. This repo contains Python e
 | [**File Processing**](./file-processing/) | Batch process multiple file formats in parallel | Parallel execution with `asyncio.gather()`, multi-format handling, aggregation | None |
 | [**Data Pipeline**](./data-pipeline/) | Multi-source customer analytics pipeline | Parallel extraction, data enrichment, combining parallel + sequential patterns | `httpx` |
 | [**File Analyzer**](./file-analyzer/) | API service calling workflow tasks for file analysis | Client SDK + Task SDK, workflow slugs, service separation, FastAPI integration | `fastapi`, `uvicorn` |
+| [**ffmpeg Transcode**](./ffmpeg-transcode/) | Video to HLS renditions and thumbnails | ffmpeg from the native runtime, per-task compute plan (`4c-16g`), long timeouts, retry only the transcode task | None |
 
 ### 1. Hello World
 
@@ -98,3 +99,14 @@ Complete Client SDK + Task SDK integration — a file analysis API with separate
 The only example that shows both Task SDK and Client SDK together — ideal for understanding how to build APIs that call workflow tasks.
 
 [View File Analyzer Example →](./file-analyzer/)
+
+### 7. ffmpeg Transcode
+
+Turn source videos into HLS renditions (720p, 480p, 360p) and thumbnails with ffmpeg, one task run per video.
+
+- ffmpeg and ffprobe from Render's native runtime, no Docker image
+- The transcode task on `4c-16g` with a 3-hour timeout; the fan-out task on `flex`
+- Retries on the transcode task only, none on the fan-out
+- Videos in by URL, small outputs back (base64 thumbnails, rendition sizes); shows where a real app would upload to object storage
+
+[View ffmpeg Transcode Example →](./ffmpeg-transcode/)
