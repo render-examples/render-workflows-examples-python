@@ -1,0 +1,37 @@
+[
+  {
+    "id": "TCK-1001",
+    "account_id": "ACC-100",
+    "order_id": "ORD-2001",
+    "subject": "Charged twice for my order",
+    "body": "I was charged two times for order ORD-2001 yesterday. Please fix this."
+  },
+  {
+    "id": "TCK-1002",
+    "account_id": "ACC-200",
+    "order_id": null,
+    "subject": "Can't sign in after password reset",
+    "body": "I reset my password this morning and now the login page says my session is invalid. Clearing cookies didn't help."
+  },
+  {
+    "id": "TCK-1003",
+    "account_id": "ACC-300",
+    "order_id": null,
+    "subject": "Why is my account past due?",
+    "body": "I got an email saying my account is past due, but I thought my card was on file. What do I owe?"
+  },
+  {
+    "id": "TCK-1004",
+    "account_id": "ACC-100",
+    "order_id": null,
+    "subject": "API returning 500 errors",
+    "body": "Since about 9am every call to the reports API returns HTTP 500. Nothing changed on our side."
+  },
+  {
+    "id": "TCK-1005",
+    "account_id": "ACC-200",
+    "order_id": "ORD-2003",
+    "subject": "Order never arrived",
+    "body": "Order ORD-2003 still hasn't arrived and the tracking link in the email returns a 404 page."
+  }
+]

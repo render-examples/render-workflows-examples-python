@@ -1,0 +1,3 @@
+render==1.11.0
+claude-agent-sdk==0.2.189
+pydantic==2.14.4
