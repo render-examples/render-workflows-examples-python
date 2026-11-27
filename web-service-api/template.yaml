@@ -1,0 +1,32 @@
+# This file is used by `render workflows init` to scaffold new projects.
+# It tells the CLI how to display this template and what instructions to show
+# after scaffolding. You can safely ignore it when using this example directly.
+
+name: Web Service API
+description: FastAPI service that starts a workflow task and reports its status, no API keys needed to try it
+
+workflowsRoot: .
+
+renderBuildCommand: pip install -r requirements.txt
+renderStartCommand: python workflow.py
+
+nextSteps:
+  - label: Enter your project directory
+    command: cd {{dir}}
+  - label: Start your local task server
+    command: render workflows dev -- {{startCommand}}
+    hint: This runs the workflow service locally. The task needs no API keys.
+  - label: Start the API (in another terminal)
+    command: RENDER_USE_LOCAL_DEV=true .venv/bin/python -m uvicorn api:app --port 8000
+    hint: RENDER_USE_LOCAL_DEV points the API's Render client at your local task server, so it needs no Render API key.
+  - label: Start a job (in a third terminal)
+    command: "curl -i localhost:8000/jobs -H 'Idempotency-Key: demo-1' --json @job.json"
+    hint: job.json asks for the EMEA report for 2026-Q3. Returns 202 with the run ID. Bad input returns 400 and starts nothing.
+  - label: Check the job
+    command: curl localhost:8000/jobs/<run_id>
+    hint: Use the run_id from the previous step. The report is in result once status is completed.
+  - label: Deploy to Render
+    hint: |
+      Push this code to a Git repository, then create two services in the Render Dashboard:
+      • A workflow service. Build command: {{renderBuildCommand}}. Start command: {{renderStartCommand}}.
+      • A web service. Same build command. Start command: uvicorn api:app --host 0.0.0.0 --port $PORT. Environment: RENDER_API_KEY, WORKFLOW_SLUG (the workflow service's slug).
