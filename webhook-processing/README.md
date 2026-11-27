@@ -19,7 +19,7 @@ GitHub ──POST /webhooks/github──▶ receiver (FastAPI web service)
          X-Hub-Signature-256        2. INSERT delivery d1 + payload     (Postgres)
                                     3. already processed? ── 200 {"duplicate": true}
                                     4. start_task("process_delivery", ["d1"])
-       ◀── 202 in ~100 ms ──────────   (503 if it can't start, so GitHub shows a failure)
+       ◀── 202 in under a second ───   (503 if it can't start, so GitHub shows a failure)
 
 workflow service
 process_delivery(d1)                        retries 3 times
@@ -105,7 +105,7 @@ python send_delivery.py deliveries/push.json --bad-signature
 # 401 {"detail":"Bad signature"}
 ```
 
-Watch a retry: `deliveries/issue-fail-once.json` is an issue titled `[fail-once] ...`, and `process_delivery` fails its first attempt for such an issue, after it has updated the counters. The transaction rolls back, Render retries, and the issue is counted once:
+Watch a retry: `deliveries/issue-fail-once.json` is an issue titled `[fail-once] ...`, and `process_delivery` fails the first attempt of every delivery about such an issue, after it has updated the counters. The transaction rolls back, Render retries, and the issue is counted once:
 
 ```bash
 python send_delivery.py deliveries/issue-fail-once.json
@@ -183,7 +183,7 @@ Then add the webhook in GitHub: in your repository, **Settings > Webhooks > Add 
 | Secret | the same `GITHUB_WEBHOOK_SECRET` |
 | Which events | **Let me select individual events**: **Pushes** and **Issues** |
 
-GitHub sends a `ping` when you save; the receiver answers `200`. Push a commit or open an issue, then open the webhook's **Recent Deliveries** tab: each delivery shows the `202` and how long the receiver took. **Redeliver** sends the same delivery again with the same `X-GitHub-Delivery` ID; the receiver answers `200 {"duplicate": true}`.
+GitHub sends a `ping` when you save; the receiver answers `200`. Push a commit or open an issue, then open the webhook's **Recent Deliveries** tab: each delivery shows the `202` and how long the receiver took. In our test on a Starter instance, GitHub recorded 0.3 to 0.9 seconds per delivery. **Redeliver** sends the same delivery again with the same `X-GitHub-Delivery` ID; the receiver answers `200 {"duplicate": true}`.
 
 You can also redeliver with the GitHub CLI. The delivery's numeric `id` from the first call goes in the second; its `guid` is the `X-GitHub-Delivery` value:
 
