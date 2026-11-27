@@ -22,6 +22,7 @@ Render Workflows support both Python and TypeScript. This repo contains Python e
 | [**File Processing**](./file-processing/) | Batch process multiple file formats in parallel | Parallel execution with `asyncio.gather()`, multi-format handling, aggregation | None |
 | [**Data Pipeline**](./data-pipeline/) | Multi-source customer analytics pipeline | Parallel extraction, data enrichment, combining parallel + sequential patterns | `httpx` |
 | [**File Analyzer**](./file-analyzer/) | API service calling workflow tasks for file analysis | Client SDK + Task SDK, workflow slugs, service separation, FastAPI integration | `fastapi`, `uvicorn` |
+| [**Idempotent Side Effects**](./idempotent-side-effects/) | Retry an LLM call without repeating a refund credit | Separate tasks for the model call and the side effect, idempotency keys from business input, `ON CONFLICT DO NOTHING`, an injected failure to watch the retry | `openai`, `psycopg` |
 
 ### 1. Hello World
 
@@ -98,3 +99,14 @@ Complete Client SDK + Task SDK integration — a file analysis API with separate
 The only example that shows both Task SDK and Client SDK together — ideal for understanding how to build APIs that call workflow tasks.
 
 [View File Analyzer Example →](./file-analyzer/)
+
+### 7. Idempotent Side Effects
+
+A refund flow that drafts its decision with OpenAI and then issues a refund credit exactly once, even when the task that issues it fails after the write and Render retries it.
+
+- The model call and the side effect are separate tasks with their own retries
+- The idempotency key comes from the account and order, not the run or attempt
+- Postgres `INSERT ... ON CONFLICT DO NOTHING` on that key, plus the same key for providers like Stripe
+- A switch that fails the credit task once, right after the write, to watch the retry skip it
+
+[View Idempotent Side Effects Example →](./idempotent-side-effects/)
