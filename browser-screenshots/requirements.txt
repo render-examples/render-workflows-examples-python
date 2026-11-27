@@ -1,0 +1,2 @@
+render==1.11.0
+playwright==1.65.2

@@ -1,0 +1,30 @@
+# This file is used by `render workflows init` to scaffold new projects.
+# It tells the CLI how to display this template and what instructions to show
+# after scaffolding. You can safely ignore it when using this example directly.
+
+name: Browser Screenshots
+description: Check many web pages with headless Chromium (Playwright), one task run per URL, with screenshots
+
+workflowsRoot: .
+
+renderBuildCommand: pip install -r requirements.txt && PLAYWRIGHT_BROWSERS_PATH=0 playwright install --only-shell chromium
+renderStartCommand: python main.py
+
+nextSteps:
+  - label: Enter your project directory
+    command: cd {{dir}}
+  - label: Download headless Chromium into the project
+    command: PLAYWRIGHT_BROWSERS_PATH=0 .venv/bin/playwright install --only-shell chromium
+    hint: About 100 MB. PLAYWRIGHT_BROWSERS_PATH=0 puts it inside the installed playwright package, which is where main.py looks for it.
+  - label: Start your local task server
+    command: render workflows dev -- {{startCommand}}
+    hint: This runs your workflow service locally, allowing you to view and run tasks without deploying to Render.
+  - label: Check a page locally (in another terminal)
+    command: render workflows tasks runs start check_page --local --input-file sample-input.json
+    hint: Loads the page in headless Chromium and returns its status, title, load time, console errors, broken images and a 320 px thumbnail (base64). No keys needed.
+  - label: Deploy to Render
+    hint: |
+      Push this code to a remote repository, then create a workflow service from your Render Dashboard with these build and start commands:
+      • Build command: {{renderBuildCommand}}
+      • Start command: {{renderStartCommand}}
+      No environment variables are required.
