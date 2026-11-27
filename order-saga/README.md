@@ -5,7 +5,7 @@ Check out an order in three steps (reserve inventory, charge the payment, create
 ## What it shows
 
 - A [flow](https://render.com/docs/workflows-defining-flows) with `@app.flow` and `ctx.step`: each step's result is checkpointed
-- Replay after a crash: the flow kills its own process once, Render replays it, and the steps that finished before the crash aren't run again
+- Replay after a crash: with `SIMULATE_CRASH=1`, the flow kills its own process once, the local task server replays it, and the steps that finished before the crash aren't run again
 - The saga pattern: compensating steps (refund, release) that run newest first when a later step fails
 - Two kinds of failure: a declined card comes back as a result and isn't retried; a carrier outage is retried, then the flow catches the `StepError` and compensates
 - An idempotency key on every call that changes something, so a step retry reuses the charge it already made
@@ -32,7 +32,7 @@ checkout (flow: runs on one instance, steps run in its process)
 | `ORD-3001` | Everything succeeds | `completed` |
 | `ORD-3002` | The card is declined (`pm_card_declined`) | `compensated`: inventory released |
 | `ORD-3003` | The carrier API is down for all three attempts | `compensated`: payment refunded, then inventory released |
-| `ORD-3004` | The process exits right after the charge | `completed` after a replay. Reserve and charge ran in the first process, the rest in the second |
+| `ORD-3004` | With `SIMULATE_CRASH=1`, the process exits right after the charge | `completed` after a replay. Reserve and charge ran in the first process, the rest in the second. Without the variable, it completes with no crash |
 | `ORD-3005` | The charge goes through but its response is lost | `completed`. The retry sends the same idempotency key and gets the saved charge back, so the card is charged once |
 
 ## How the saga works
@@ -50,7 +50,7 @@ If an undo step also runs out of retries, the flow raises, the run fails, and so
 
 Render records each step's result as it finishes. If the instance running the flow dies, Render replays the flow on a new instance: it calls `checkout` again from the top, and each `ctx.step` that already finished returns its recorded result instead of running. So flow code must make the same `ctx.step` calls in the same order with the same inputs every time. Anything that talks to another service, reads the clock or generates an ID goes inside a step.
 
-`ORD-3004` shows it. Every step result carries `process`, an ID made once per process. `simulate_crash` exits the process when it runs in the same process that charged the card. On the replay, `reserve_inventory` and `charge_payment` return their recorded results, still with the first process's ID, and `simulate_crash` runs again in a new process, which has a different ID, so it returns:
+`ORD-3004` shows it when the local task server runs with `SIMULATE_CRASH=1`. Every step result carries `process`, an ID made once per process. `simulate_crash` exits the process when it runs in the same process that charged the card. On the replay, `reserve_inventory` and `charge_payment` return their recorded results, still with the first process's ID, and `simulate_crash` runs again in a new process, which has a different ID, so it returns:
 
 ```
 ORD-3004: completed
@@ -59,6 +59,8 @@ ORD-3004: completed
   simulate_crash     ran in process 89fe1e68
   create_shipment    ran in process 89fe1e68
 ```
+
+The crash only replays on the local task server. On Render, a process that exits on its own fails the flow run, whether it exits with an error, exits cleanly, or is killed by a signal (the run's error is "Task exited with non-zero exit code", or "Task exited without error but did not report task completion"). Render replays a flow when the instance running it fails, which code can't trigger on purpose. That's why the crash is behind `SIMULATE_CRASH`, which the deployed service leaves unset.
 
 ## Prerequisites
 
@@ -71,10 +73,10 @@ ORD-3004: completed
 
 ```bash
 pip install -r requirements.txt
-render workflows dev -- python main.py
+SIMULATE_CRASH=1 render workflows dev -- python main.py
 ```
 
-In another terminal, check out the first order. The local task server runs flows as tasks, so start them with `tasks runs start`. Input is a JSON array of the flow's arguments:
+`SIMULATE_CRASH=1` turns on the crash for `ORD-3004`; the local task server passes your shell's environment to the workflow. In another terminal, check out the first order. The local task server runs flows as tasks, so start them with `tasks runs start`. Input is a JSON array of the flow's arguments:
 
 ```bash
 render workflows tasks runs start checkout --local --input="[$(jq -c '.[0]' orders.json)]"
@@ -112,7 +114,7 @@ Use `.[1]`, `.[2]` and `.[4]` for the other orders.
 4. Create the workflow. Once the first version is ready, open the `checkout` flow and click **Run Flow** with an order from `orders.json` wrapped in a JSON array, or start one with the CLI:
 
    ```bash
-   render workflows flows runs start <workflow-slug>/checkout --input="[$(jq -c '.[3]' orders.json)]"
+   render workflows flows runs start <workflow-slug>/checkout --input="[$(jq -c '.[2]' orders.json)]"
    render workflows flows runs show <flow-run-id>
    ```
 
@@ -148,7 +150,7 @@ The idempotency key comes from the order ID, so a client that retries after a ti
 - **An interrupted step runs again.** If the process dies after a service call but before the step's result is recorded, the replay calls the service again. The idempotency key is what stops a second charge. The fakes here keep their keys in memory, so they only dedupe within one process. A real provider keeps them on its side: Stripe saves the response for a key for at least 24 hours. See Stripe's [idempotent requests](https://docs.stripe.com/api/idempotent_requests).
 - **Build keys from the business input.** `ORD-3005:charge` is the same on every attempt and replay. A key built from the run ID, the attempt or the time would change between attempts and stop nothing.
 - **A charge that times out may still have gone through.** If `charge_payment` runs out of retries on timeouts, this flow releases the inventory but has no charge ID to refund. In production, look the charge up by its idempotency key, or retry it with the same key until you get an answer, before deciding.
-- **Replays only happen on infrastructure failures.** Render replays a flow when its instance fails. An uncaught error, a timeout, running out of memory, a `DeterminismError` or a flow limit fails the run without a replay. Flows don't take a retry policy; steps do. See [flow replay](https://render.com/docs/workflows-defining-flows#flow-replay).
+- **Replays only happen on infrastructure failures.** Render replays a flow when its instance fails. A process that exits on its own, with any exit code or by a signal, fails the run on Render; the local task server replays it instead, which is what the crash demo uses. An uncaught error, a timeout, running out of memory, a `DeterminismError` or a flow limit fails the run without a replay. Flows don't take a retry policy; steps do. See [flow replay](https://render.com/docs/workflows-defining-flows#flow-replay).
 - **Flow code must be deterministic.** A replay that makes a different `ctx.step` call (another name, order or input) raises `DeterminismError` and fails the run. See [determinism and side effects](https://render.com/docs/workflows-defining-flows#determinism-and-side-effects).
 - **Steps run one at a time, in the flow's process.** They share the flow's compute plan, and a step retry runs the function again in the same process with the same arguments. Step functions must be sync (`def`), and their arguments and results must be JSON-serializable.
 - **Timeouts apply per attempt.** `timeout_seconds=300` bounds each attempt of the flow, and a replay gets a fresh 300 seconds. See [timeouts](https://render.com/docs/workflows-defining-flows#timeout).

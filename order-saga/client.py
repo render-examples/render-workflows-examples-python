@@ -13,6 +13,12 @@ import time
 from render import Render
 
 SLUG = os.getenv("WORKFLOW_SLUG", "order-saga")
+
+# The order steps can run in, for printing. Results come back with sorted keys.
+STEP_ORDER = [
+    "reserve_inventory", "charge_payment", "simulate_crash", "create_shipment",
+    "refund_payment", "release_inventory",
+]
 orders = json.loads((pathlib.Path(__file__).parent / "orders.json").read_text())
 
 # Render() reads RENDER_API_KEY from the environment.
@@ -54,6 +60,9 @@ for order_id, run in finished.items():
         line += f" after {result['failed_step']} failed ({result['reason']}); undid {undone}"
     print(line)
     print(f"  flow attempts: {len(run.attempts)}")
-    for name, step in result["steps"].items():
+    for name in STEP_ORDER:
+        if name not in result["steps"]:
+            continue
+        step = result["steps"][name]
         note = " (idempotent replay)" if step.get("idempotent_replayed") else ""
         print(f"  {name:<18} ran in process {step.get('process', '-')}{note}")

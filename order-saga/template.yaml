@@ -14,14 +14,14 @@ nextSteps:
   - label: Enter your project directory
     command: cd {{dir}}
   - label: Start your local task server
-    command: render workflows dev -- {{startCommand}}
-    hint: Needs Render CLI 2.37.0 or later to run flows locally. No API keys needed; the payment and shipping services are in-process fakes.
+    command: SIMULATE_CRASH=1 render workflows dev -- {{startCommand}}
+    hint: Needs Render CLI 2.37.0 or later to run flows locally. SIMULATE_CRASH=1 lets the order below crash once so you can watch the replay. No API keys needed; the payment and shipping services are in-process fakes.
   - label: Check out an order that crashes after the charge (in another terminal)
     command: "render workflows tasks runs start checkout --local --input='[{\"order_id\": \"ORD-3004\", \"customer_id\": \"CUS-400\", \"items\": [{\"sku\": \"MUG-WHT\", \"quantity\": 4, \"unit_price_cents\": 1800}], \"payment_method\": \"pm_card_visa\", \"shipping_address\": {\"name\": \"Dev Rao\", \"line1\": \"77 King St W\", \"city\": \"Toronto\", \"postal_code\": \"M5K 1A1\", \"country\": \"CA\"}, \"simulate\": \"crash_after_charge\"}]'"
-    hint: The process exits after charging. Render replays the flow, and the reserve and charge steps return their recorded results instead of running again. The other orders in orders.json show a declined card, a carrier outage and a lost payment response.
+    hint: The process exits after charging. The local task server replays the flow, and the reserve and charge steps return their recorded results instead of running again. The other orders in orders.json show a declined card, a carrier outage and a lost payment response.
   - label: Deploy your workflow service to Render
     hint: |
       To deploy this workflow to Render, first push this code to a remote repository. Then, create a workflow service from your Render Dashboard, connect it to your repository, and provide the following build and start commands:
       • Build command: {{renderBuildCommand}}
       • Start command: {{renderStartCommand}}
-      No environment variables are needed.
+      No environment variables are needed. Leave SIMULATE_CRASH unset on Render: a process that exits on its own fails the run there instead of replaying.

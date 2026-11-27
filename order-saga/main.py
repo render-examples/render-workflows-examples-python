@@ -102,17 +102,23 @@ def refund_payment(charge: dict) -> dict:
 def simulate_crash(charged_in_process: str) -> dict:
     """Kill this process once, right after the charge, to force a replay.
 
+    Only with SIMULATE_CRASH=1, for the local task server: it replays a flow
+    whose process exits. On Render, a process that exits on its own fails the
+    run; Render replays a flow when the instance running it fails.
+
     The first time, this runs in the same process that charged the card, so it
-    exits without reporting back. Render sees the instance die and replays the
-    flow on a new one. In the replay, reserve_inventory and charge_payment
-    return their recorded results (with the first process's ID), and this step
-    runs again in the new process, which has a different ID, so it returns.
+    exits without reporting back, and the flow replays in a new process. In the
+    replay, reserve_inventory and charge_payment return their recorded results
+    (with the first process's ID), and this step runs again in the new process,
+    which has a different ID, so it returns.
     """
+    if os.getenv("SIMULATE_CRASH") != "1":
+        return {"crashed": False, "process": svc.PROCESS_ID}
     if charged_in_process == svc.PROCESS_ID:
         logger.warning("[%s] simulate_crash: exiting the process mid-flow", svc.PROCESS_ID)
         logging.shutdown()
         os._exit(1)
-    return {"charged_in": charged_in_process, "process": svc.PROCESS_ID}
+    return {"crashed": True, "charged_in": charged_in_process, "process": svc.PROCESS_ID}
 
 
 # ============================================================================
