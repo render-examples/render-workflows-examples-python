@@ -1,0 +1,30 @@
+# This file is used by `render workflows init` to scaffold new projects.
+# It tells the CLI how to display this template and what instructions to show
+# after scaffolding. You can safely ignore it when using this example directly.
+
+name: Batch Enrichment
+description: Enrich every row of a CSV through the OpenAI Batch API, with a long durable wait on the flex plan
+
+workflowsRoot: .
+
+renderBuildCommand: pip install -r requirements.txt
+renderStartCommand: python main.py
+
+nextSteps:
+  - label: Enter your project directory
+    command: cd {{dir}}
+  - label: Add your OpenAI API key
+    command: cp .env.example .env
+    hint: Then set OPENAI_API_KEY in .env. The local task server loads .env when it starts, so do this first.
+  - label: Start your local task server
+    command: render workflows dev -- {{startCommand}}
+    hint: This runs your workflow service locally, allowing you to view and run tasks without deploying to Render.
+  - label: Enrich the bundled companies.csv (in another terminal)
+    command: "render workflows tasks runs start enrich_csv --local --input='[]'"
+    hint: This submits one OpenAI batch for the 12 sample rows, waits for it (often a few minutes, up to 24 hours), and returns the enriched rows plus the rows that failed.
+  - label: Deploy your workflow service to Render
+    hint: |
+      To deploy this workflow to Render, first push this code to a remote repository. Then, create a workflow service from your Render Dashboard, connect it to your repository, and provide the following build and start commands:
+      • Build command: {{renderBuildCommand}}
+      • Start command: {{renderStartCommand}}
+      Set OPENAI_API_KEY (and optionally OPENAI_MODEL and BATCH_POLL_SECONDS) as environment variables during service creation.
