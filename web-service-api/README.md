@@ -161,7 +161,7 @@ details.status       # "pending", "running", "completed", "failed", ...
 details.results[0]   # build_report's return value, once completed
 ```
 
-`get_task_run` raises `ClientError` with `status_code == 404` for an unknown run ID.
+For a run ID it doesn't know, Render answers `400 Bad Request`, so `get_task_run` raises `ClientError` with `status_code == 400`. The API turns that, and `404`, into its own `404`.
 
 ## Limits and gotchas
 

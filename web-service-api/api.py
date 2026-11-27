@@ -100,6 +100,7 @@ async def get_job(run_id: str):
     try:
         details = await render.workflows.get_task_run(run_id)
     except ClientError as e:
+        # Render answers 400 for a run ID it doesn't know.
         if e.status_code in (400, 404):
             raise HTTPException(status_code=404, detail="No such job")
         logger.exception(f"[API] Couldn't read {run_id}")
