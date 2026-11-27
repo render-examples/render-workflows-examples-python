@@ -1,0 +1,5 @@
+render==1.11.0
+openai==3.60.0
+pydantic==2.14.4
+pypdf==7.1.1
+psycopg[binary]==3.3.9

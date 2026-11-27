@@ -22,6 +22,7 @@ Render Workflows support both Python and TypeScript. This repo contains Python e
 | [**File Processing**](./file-processing/) | Batch process multiple file formats in parallel | Parallel execution with `asyncio.gather()`, multi-format handling, aggregation | None |
 | [**Data Pipeline**](./data-pipeline/) | Multi-source customer analytics pipeline | Parallel extraction, data enrichment, combining parallel + sequential patterns | `httpx` |
 | [**File Analyzer**](./file-analyzer/) | API service calling workflow tasks for file analysis | Client SDK + Task SDK, workflow slugs, service separation, FastAPI integration | `fastapi`, `uvicorn` |
+| [**PDF Extraction**](./pdf-extraction/) | Extract invoice fields from text-layer PDFs with an LLM | Structured Outputs with page numbers, bounded re-prompts, exceptions for review, idempotency keys, Postgres upsert | `openai`, `pypdf`, `psycopg` |
 
 ### 1. Hello World
 
@@ -98,3 +99,15 @@ Complete Client SDK + Task SDK integration — a file analysis API with separate
 The only example that shows both Task SDK and Client SDK together — ideal for understanding how to build APIs that call workflow tasks.
 
 [View File Analyzer Example →](./file-analyzer/)
+
+### 7. PDF Extraction
+
+Extract structured invoice fields from text-layer PDFs with an LLM inside a task, and save the results to Postgres.
+
+- Text layer read page by page with `pypdf`, from a URL or a bundled file
+- OpenAI Structured Outputs where every field carries the page it came from
+- Bounded re-prompts inside the task when the answer fails validation
+- Missing required fields and totals that don't add up returned as exceptions for review
+- A client that starts one run per document with an idempotency key and upserts each result into Postgres
+
+[View PDF Extraction Example →](./pdf-extraction/)
