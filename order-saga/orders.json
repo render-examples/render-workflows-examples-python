@@ -1,0 +1,45 @@
+[
+  {
+    "order_id": "ORD-3001",
+    "customer_id": "CUS-100",
+    "items": [
+      { "sku": "MUG-BLK", "quantity": 2, "unit_price_cents": 1800 },
+      { "sku": "TEE-M", "quantity": 1, "unit_price_cents": 2500 }
+    ],
+    "payment_method": "pm_card_visa",
+    "shipping_address": { "name": "Ada Park", "line1": "12 Harbor St", "city": "Portland", "postal_code": "97205", "country": "US" },
+    "simulate": null
+  },
+  {
+    "order_id": "ORD-3002",
+    "customer_id": "CUS-200",
+    "items": [{ "sku": "CAP-01", "quantity": 1, "unit_price_cents": 2200 }],
+    "payment_method": "pm_card_declined",
+    "shipping_address": { "name": "Ben Ortiz", "line1": "400 Elm Ave", "city": "Austin", "postal_code": "78701", "country": "US" },
+    "simulate": null
+  },
+  {
+    "order_id": "ORD-3003",
+    "customer_id": "CUS-300",
+    "items": [{ "sku": "TEE-L", "quantity": 3, "unit_price_cents": 2500 }],
+    "payment_method": "pm_card_visa",
+    "shipping_address": { "name": "Chloe Martin", "line1": "8 Rue des Lilas", "city": "Lyon", "postal_code": "69003", "country": "FR" },
+    "simulate": "carrier_outage"
+  },
+  {
+    "order_id": "ORD-3004",
+    "customer_id": "CUS-400",
+    "items": [{ "sku": "MUG-WHT", "quantity": 4, "unit_price_cents": 1800 }],
+    "payment_method": "pm_card_visa",
+    "shipping_address": { "name": "Dev Rao", "line1": "77 King St W", "city": "Toronto", "postal_code": "M5K 1A1", "country": "CA" },
+    "simulate": "crash_after_charge"
+  },
+  {
+    "order_id": "ORD-3005",
+    "customer_id": "CUS-500",
+    "items": [{ "sku": "TEE-M", "quantity": 2, "unit_price_cents": 2500 }],
+    "payment_method": "pm_card_visa",
+    "shipping_address": { "name": "Eva Novak", "line1": "3 Long Lane", "city": "Leeds", "postal_code": "LS1 4AP", "country": "GB" },
+    "simulate": "payment_timeout_once"
+  }
+]
