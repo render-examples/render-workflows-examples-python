@@ -1,0 +1,27 @@
+# This file is used by `render workflows init` to scaffold new projects.
+# It tells the CLI how to display this template and what instructions to show
+# after scaffolding. You can safely ignore it when using this example directly.
+
+name: ffmpeg Transcode
+description: Video to HLS renditions and thumbnails with ffmpeg, one 4 CPU / 16 GB task run per video
+
+workflowsRoot: .
+
+renderBuildCommand: pip install -r requirements.txt
+renderStartCommand: python main.py
+
+nextSteps:
+  - label: Enter your project directory
+    command: cd {{dir}}
+  - label: Start your local task server
+    command: render workflows dev -- {{startCommand}}
+    hint: This runs your workflow service locally, allowing you to view and run tasks without deploying to Render. Local runs use your own ffmpeg (brew install ffmpeg).
+  - label: Transcode a video locally (in another terminal)
+    command: render workflows tasks runs start transcode_video --local --input-file sample-input.json
+    hint: Downloads the Sintel trailer, builds 720p/480p/360p HLS and four thumbnails, and returns the thumbnails (base64) and each rendition's size. No keys needed.
+  - label: Deploy to Render
+    hint: |
+      Push this code to a remote repository, then create a workflow service from your Render Dashboard with these build and start commands:
+      • Build command: {{renderBuildCommand}}
+      • Start command: {{renderStartCommand}}
+      No environment variables are required. ffmpeg is already installed on Render's native runtimes.

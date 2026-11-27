@@ -1,0 +1,6 @@
+[
+  {"id": "sintel-trailer", "url": "https://download.blender.org/durian/trailer/sintel_trailer-1080p.mp4"},
+  {"id": "big-buck-bunny-trailer", "url": "https://download.blender.org/peach/trailer/trailer_720p.mov"},
+  {"id": "tears-of-steel", "url": "https://download.blender.org/demo/movies/ToS/tears_of_steel_720p.mov"},
+  {"id": "missing-file", "url": "https://download.blender.org/durian/trailer/no-such-file.mp4"}
+]
