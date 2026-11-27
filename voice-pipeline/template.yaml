@@ -1,0 +1,33 @@
+# This file is used by `render workflows init` to scaffold new projects.
+# It tells the CLI how to display this template and what instructions to show
+# after scaffolding. You can safely ignore it when using this example directly.
+
+name: Voice Pipeline
+description: Answer a recorded voice message with speech-to-text, an LLM reply and text-to-speech, each as its own task
+
+workflowsRoot: .
+
+renderBuildCommand: pip install -r requirements.txt
+renderStartCommand: python main.py
+
+nextSteps:
+  - label: Enter your project directory
+    command: cd {{dir}}
+  - label: Add your OpenAI API key
+    command: cp .env.example .env
+    hint: Then set OPENAI_API_KEY in .env. The local task server loads .env when it starts, so do this first.
+  - label: Start your local task server
+    command: render workflows dev -- {{startCommand}}
+    hint: This runs your workflow service locally, allowing you to view and run tasks without deploying to Render.
+  - label: Run the LLM step on its own (in another terminal)
+    command: "render workflows tasks runs start reply --local --input='[\"Hi, I was charged two times for order ORD-2001 yesterday. Can you fix this?\"]'"
+    hint: Each step of the pipeline is its own task, so you can run and retry it on its own.
+  - label: Send the sample voice message through the whole pipeline
+    command: RENDER_USE_LOCAL_DEV=true .venv/bin/python client.py
+    hint: The client sends sample-call.mp3 to handle_voice_message, prints the transcript and the reply, and saves the spoken reply to reply.mp3.
+  - label: Deploy your workflow service to Render
+    hint: |
+      To deploy this workflow to Render, first push this code to a remote repository. Then, create a workflow service from your Render Dashboard, connect it to your repository, and provide the following build and start commands:
+      • Build command: {{renderBuildCommand}}
+      • Start command: {{renderStartCommand}}
+      Set OPENAI_API_KEY (and optionally OPENAI_MODEL, OPENAI_STT_MODEL, OPENAI_TTS_MODEL and OPENAI_TTS_VOICE) as environment variables during service creation.
