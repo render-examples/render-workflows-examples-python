@@ -22,6 +22,7 @@ Render Workflows support both Python and TypeScript. This repo contains Python e
 | [**File Processing**](./file-processing/) | Batch process multiple file formats in parallel | Parallel execution with `asyncio.gather()`, multi-format handling, aggregation | None |
 | [**Data Pipeline**](./data-pipeline/) | Multi-source customer analytics pipeline | Parallel extraction, data enrichment, combining parallel + sequential patterns | `httpx` |
 | [**File Analyzer**](./file-analyzer/) | API service calling workflow tasks for file analysis | Client SDK + Task SDK, workflow slugs, service separation, FastAPI integration | `fastapi`, `uvicorn` |
+| [**Browser Screenshots**](./browser-screenshots/) | Check many web pages with headless Chromium | Playwright on the native runtime, fan-out with a concurrency cap, retries per URL, small outputs | `playwright` |
 
 ### 1. Hello World
 
@@ -98,3 +99,14 @@ Complete Client SDK + Task SDK integration — a file analysis API with separate
 The only example that shows both Task SDK and Client SDK together — ideal for understanding how to build APIs that call workflow tasks.
 
 [View File Analyzer Example →](./file-analyzer/)
+
+### 7. Browser Screenshots
+
+Check many web pages with headless Chromium: one task run per URL records the status code, title, load time, console errors and broken images, and takes a screenshot.
+
+- Playwright's headless Chromium installed at build time into the project, no Docker image
+- One task run per URL, with a concurrency cap in code (Render has no per-task cap)
+- Retries per URL for timeouts and 5xx; bad URLs and unknown hosts come back as results
+- Small outputs back (a 320 px JPEG thumbnail per page); shows where a real app would upload full screenshots to object storage
+
+[View Browser Screenshots Example →](./browser-screenshots/)
