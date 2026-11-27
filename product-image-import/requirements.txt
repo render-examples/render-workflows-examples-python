@@ -1,0 +1,5 @@
+render==1.11.0
+blurhash==1.1.5
+openai==3.60.0
+pillow==13.0.0
+pydantic==2.14.4
