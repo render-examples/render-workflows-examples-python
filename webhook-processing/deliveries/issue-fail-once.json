@@ -1,0 +1,32 @@
+{
+  "event": "issues",
+  "payload": {
+    "action": "opened",
+    "issue": {
+      "number": 43,
+      "title": "[fail-once] Coupon field accepts expired codes",
+      "state": "open",
+      "body": "Found while testing checkout.",
+      "html_url": "https://github.com/acme/storefront/issues/43",
+      "user": {
+        "login": "octocat",
+        "id": 1,
+        "type": "User"
+      },
+      "labels": []
+    },
+    "repository": {
+      "id": 100000001,
+      "name": "storefront",
+      "full_name": "acme/storefront",
+      "private": true,
+      "html_url": "https://github.com/acme/storefront",
+      "default_branch": "main"
+    },
+    "sender": {
+      "login": "octocat",
+      "id": 1,
+      "type": "User"
+    }
+  }
+}
