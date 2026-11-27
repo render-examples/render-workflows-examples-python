@@ -1,2 +1,2 @@
-render>=1.0.1
-openai>=1.0.0
+render==1.11.0
+openai==1.109.1

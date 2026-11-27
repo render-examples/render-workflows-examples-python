@@ -232,7 +232,7 @@ print(result.results)   # Task return value
 
 ### Prerequisites
 
-- Python 3.10+
+- Python 3.11+
 - Render API key
 
 ### Running the Workflow Service

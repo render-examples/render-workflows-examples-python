@@ -34,7 +34,7 @@ run_etl_pipeline (main orchestrator)
 ## Local Development
 
 ### Prerequisites
-- Python 3.10+
+- Python 3.11+
 
 ### Setup and Run
 

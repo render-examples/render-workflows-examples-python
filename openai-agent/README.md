@@ -42,7 +42,7 @@ multi_turn_conversation (orchestrator)
 ## Local Development
 
 ### Prerequisites
-- Python 3.10+
+- Python 3.11+
 - OpenAI API key
 
 ### Setup and Run

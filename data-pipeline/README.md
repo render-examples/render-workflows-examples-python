@@ -48,7 +48,7 @@ run_data_pipeline (orchestrator)
 ## Local Development
 
 ### Prerequisites
-- Python 3.10+
+- Python 3.11+
 
 ### Setup and Run
 
