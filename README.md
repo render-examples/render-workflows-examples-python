@@ -22,6 +22,7 @@ Render Workflows support both Python and TypeScript. This repo contains Python e
 | [**File Processing**](./file-processing/) | Batch process multiple file formats in parallel | Parallel execution with `asyncio.gather()`, multi-format handling, aggregation | None |
 | [**Data Pipeline**](./data-pipeline/) | Multi-source customer analytics pipeline | Parallel extraction, data enrichment, combining parallel + sequential patterns | `httpx` |
 | [**File Analyzer**](./file-analyzer/) | API service calling workflow tasks for file analysis | Client SDK + Task SDK, workflow slugs, service separation, FastAPI integration | `fastapi`, `uvicorn` |
+| [**Voice Pipeline**](./voice-pipeline/) | Answer a recorded voice message with STT, an LLM and TTS | One task per step, chaining with `ctx.run`, audio passed as base64 under the 4 MB argument cap, retry each step and not the orchestrator | `openai` |
 
 ### 1. Hello World
 
@@ -98,3 +99,14 @@ Complete Client SDK + Task SDK integration — a file analysis API with separate
 The only example that shows both Task SDK and Client SDK together — ideal for understanding how to build APIs that call workflow tasks.
 
 [View File Analyzer Example →](./file-analyzer/)
+
+### 7. Voice Pipeline
+
+Answer a recorded voice message: speech-to-text, a support agent's reply, and text-to-speech, each running as its own task.
+
+- One task per step (`transcribe`, `reply`, `synthesize`), chained by an orchestrator with `ctx.run`
+- Audio passed between tasks as base64, sized to stay under the 4 MB argument cap
+- Each step retries on its own; the orchestrator doesn't retry
+- A sample voice message and a client script that saves the spoken reply
+
+[View Voice Pipeline Example →](./voice-pipeline/)
