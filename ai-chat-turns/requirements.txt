@@ -1,0 +1,7 @@
+render==1.11.0
+openai-agents==0.26.0
+openai==3.60.0
+pydantic==2.14.4
+psycopg[binary]==3.3.9
+fastapi==0.165.0
+uvicorn[standard]==0.54.0

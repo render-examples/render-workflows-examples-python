@@ -22,6 +22,7 @@ Render Workflows support both Python and TypeScript. This repo contains Python e
 | [**File Processing**](./file-processing/) | Batch process multiple file formats in parallel | Parallel execution with `asyncio.gather()`, multi-format handling, aggregation | None |
 | [**Data Pipeline**](./data-pipeline/) | Multi-source customer analytics pipeline | Parallel extraction, data enrichment, combining parallel + sequential patterns | `httpx` |
 | [**File Analyzer**](./file-analyzer/) | API service calling workflow tasks for file analysis | Client SDK + Task SDK, workflow slugs, service separation, FastAPI integration | `fastapi`, `uvicorn` |
+| [**AI Chat Turns**](./ai-chat-turns/) | Chat app where each turn is a workflow task | Start a task from a web service, one turn per conversation, idempotency keys, finishing turns after a restart | `openai-agents`, `fastapi`, `psycopg` |
 
 ### 1. Hello World
 
@@ -98,3 +99,14 @@ Complete Client SDK + Task SDK integration — a file analysis API with separate
 The only example that shows both Task SDK and Client SDK together — ideal for understanding how to build APIs that call workflow tasks.
 
 [View File Analyzer Example →](./file-analyzer/)
+
+### 8. AI Chat Turns
+
+A chat app where each turn of a conversation runs as a workflow task: a FastAPI service stores messages in Postgres, a task writes each reply, and the API learns when the reply is ready.
+
+- Web service starts a task per turn and returns 202 right away
+- One turn at a time per conversation, enforced in Postgres
+- Idempotency keys on the task run and on the agent's write tool
+- Turns in flight when the API restarts still get recorded
+
+[View AI Chat Turns Example →](./ai-chat-turns/)
