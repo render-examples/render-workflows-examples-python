@@ -22,6 +22,7 @@ Render Workflows support both Python and TypeScript. This repo contains Python e
 | [**File Processing**](./file-processing/) | Batch process multiple file formats in parallel | Parallel execution with `asyncio.gather()`, multi-format handling, aggregation | None |
 | [**Data Pipeline**](./data-pipeline/) | Multi-source customer analytics pipeline | Parallel extraction, data enrichment, combining parallel + sequential patterns | `httpx` |
 | [**File Analyzer**](./file-analyzer/) | API service calling workflow tasks for file analysis | Client SDK + Task SDK, workflow slugs, service separation, FastAPI integration | `fastapi`, `uvicorn` |
+| [**Webhook Processing**](./webhook-processing/) | Receive GitHub webhooks and process each delivery exactly once | Signature verification, fast ack, starting tasks from a web service, dedupe by delivery ID, retries, replay | `fastapi`, `uvicorn`, `psycopg` |
 
 ### 1. Hello World
 
@@ -98,3 +99,16 @@ Complete Client SDK + Task SDK integration — a file analysis API with separate
 The only example that shows both Task SDK and Client SDK together — ideal for understanding how to build APIs that call workflow tasks.
 
 [View File Analyzer Example →](./file-analyzer/)
+
+### 7. Webhook Processing
+
+A GitHub webhook receiver that answers in milliseconds and leaves the work to a workflow task.
+
+- Verifies `X-Hub-Signature-256` against the raw body
+- Stores each delivery in Postgres and starts a task with only the delivery ID
+- A redelivery of a processed delivery is a no-op, and a retried task can't apply a delivery twice
+- Replays deliveries that were stored but never processed
+
+It needs Postgres. Locally, a script sends signed test deliveries; once deployed, GitHub sends real ones.
+
+[View Webhook Processing Example →](./webhook-processing/)
