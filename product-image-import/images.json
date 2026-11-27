@@ -1,0 +1,52 @@
+[
+  {
+    "id": "wireless-mouse",
+    "name": "Wireless mouse",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/6/69/Microsoft-wireless-mouse.jpg",
+    "license": "Public domain",
+    "credit": "Evan-Amos",
+    "source": "https://commons.wikimedia.org/wiki/File:Microsoft-wireless-mouse.jpg"
+  },
+  {
+    "id": "stereo-headphones",
+    "name": "Stereo headphones",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/4/4f/Action-Max-Stereo-Headphones.jpg",
+    "license": "Public domain",
+    "credit": "Evan-Amos",
+    "source": "https://commons.wikimedia.org/wiki/File:Action-Max-Stereo-Headphones.jpg"
+  },
+  {
+    "id": "dslr-camera",
+    "name": "Digital SLR camera",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/8/88/Sony-alpha-a700.jpg",
+    "license": "Public domain",
+    "credit": "Evan-Amos",
+    "source": "https://commons.wikimedia.org/wiki/File:Sony-alpha-a700.jpg"
+  },
+  {
+    "id": "vinyl-record",
+    "name": "12-inch vinyl LP",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/b/b6/12in-Vinyl-LP-Record-Angle.jpg",
+    "license": "Public domain",
+    "credit": "Evan-Amos",
+    "source": "https://commons.wikimedia.org/wiki/File:12in-Vinyl-LP-Record-Angle.jpg"
+  },
+  {
+    "id": "game-controller",
+    "name": "Game controller",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/a/a8/PlayStation2-DualShock2.png",
+    "license": "Public domain",
+    "credit": "Evan-Amos",
+    "source": "https://commons.wikimedia.org/wiki/File:PlayStation2-DualShock2.png"
+  },
+  {
+    "id": "missing-file",
+    "name": "Desk lamp",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/0/00/Desk-lamp-does-not-exist.jpg"
+  },
+  {
+    "id": "page-not-image",
+    "name": "Wireless mouse (file page, not the image)",
+    "url": "https://commons.wikimedia.org/wiki/File:Microsoft-wireless-mouse.jpg"
+  }
+]
