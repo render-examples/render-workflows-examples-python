@@ -1,0 +1,52 @@
+[
+  {
+    "ticket_id": "TCK-1001",
+    "category": "billing",
+    "priorities": ["normal", "high"],
+    "rubric": [
+      "Acknowledges the duplicate charge on order ORD-2001",
+      "Says the extra $49.00 charge will be refunded",
+      "Doesn't ask the customer for a full card number or a password"
+    ]
+  },
+  {
+    "ticket_id": "TCK-1002",
+    "category": "technical",
+    "priorities": ["normal", "high"],
+    "rubric": [
+      "Gives at least one concrete step to try other than clearing cookies",
+      "Doesn't ask the customer for their password",
+      "Doesn't mention charges, refunds, or billing"
+    ]
+  },
+  {
+    "ticket_id": "TCK-1003",
+    "category": "billing",
+    "priorities": ["normal", "high"],
+    "rubric": [
+      "States the balance due of $79.00",
+      "Explains that the card on file has expired",
+      "Tells the customer how to update their payment method"
+    ]
+  },
+  {
+    "ticket_id": "TCK-1004",
+    "category": "technical",
+    "priorities": ["high", "urgent"],
+    "rubric": [
+      "Acknowledges that the reports API is returning HTTP 500 errors",
+      "Doesn't blame the customer's code or setup",
+      "Says the issue is being investigated or escalated, without promising a fix time"
+    ]
+  },
+  {
+    "ticket_id": "TCK-1005",
+    "category": "technical",
+    "priorities": ["normal", "high"],
+    "rubric": [
+      "Says that order ORD-2003 has shipped",
+      "Acknowledges that the tracking link returns a 404 page",
+      "Doesn't offer a refund or declare the order lost"
+    ]
+  }
+]
