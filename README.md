@@ -22,6 +22,7 @@ Render Workflows support both Python and TypeScript. This repo contains Python e
 | [**File Processing**](./file-processing/) | Batch process multiple file formats in parallel | Parallel execution with `asyncio.gather()`, multi-format handling, aggregation | None |
 | [**Data Pipeline**](./data-pipeline/) | Multi-source customer analytics pipeline | Parallel extraction, data enrichment, combining parallel + sequential patterns | `httpx` |
 | [**File Analyzer**](./file-analyzer/) | API service calling workflow tasks for file analysis | Client SDK + Task SDK, workflow slugs, service separation, FastAPI integration | `fastapi`, `uvicorn` |
+| [**Product Image Import**](./product-image-import/) | Bulk-import product images from URLs | Fan-out per image with a concurrency cap, Pillow variants (WebP/AVIF) and blurhash, vision-model alt text with structured output, failed rows instead of a failed batch | `pillow`, `blurhash`, `openai` |
 
 ### 1. Hello World
 
@@ -98,3 +99,15 @@ Complete Client SDK + Task SDK integration — a file analysis API with separate
 The only example that shows both Task SDK and Client SDK together — ideal for understanding how to build APIs that call workflow tasks.
 
 [View File Analyzer Example →](./file-analyzer/)
+
+### 7. Product Image Import
+
+Import product images from a list of URLs: resized JPEG, WebP and AVIF variants, a blurhash placeholder, and alt text from an OpenAI vision model.
+
+- One `process_image` and one `generate_alt_text` task run per image, fanned out with a concurrency cap
+- Pillow on Render's native runtime, no Docker image
+- Retries on the tasks that download or call the model, none on the fan-out
+- Bad URLs and files that aren't images come back as failed rows in the manifest
+- Small outputs only (variant sizes, blurhash, a tiny thumbnail); shows where a real app would upload variants to object storage
+
+[View Product Image Import Example →](./product-image-import/)
