@@ -22,6 +22,7 @@ Render Workflows support both Python and TypeScript. This repo contains Python e
 | [**File Processing**](./file-processing/) | Batch process multiple file formats in parallel | Parallel execution with `asyncio.gather()`, multi-format handling, aggregation | None |
 | [**Data Pipeline**](./data-pipeline/) | Multi-source customer analytics pipeline | Parallel extraction, data enrichment, combining parallel + sequential patterns | `httpx` |
 | [**File Analyzer**](./file-analyzer/) | API service calling workflow tasks for file analysis | Client SDK + Task SDK, workflow slugs, service separation, FastAPI integration | `fastapi`, `uvicorn` |
+| [**Content Moderation**](./content-moderation/) | Moderate user posts (text and images): approve, flag for review, or reject | Fan-out per post with a concurrency cap, retries on the API calls only, policy decisions and permanent errors returned as results | `openai`, `httpx2` |
 
 ### 1. Hello World
 
@@ -98,3 +99,14 @@ Complete Client SDK + Task SDK integration — a file analysis API with separate
 The only example that shows both Task SDK and Client SDK together — ideal for understanding how to build APIs that call workflow tasks.
 
 [View File Analyzer Example →](./file-analyzer/)
+
+### 7. Content Moderation
+
+Moderate user-generated posts with the OpenAI moderation endpoint: each post runs in its own task run, a two-threshold policy approves, flags for review, or rejects it, and flagged posts get a short note for the human reviewer.
+
+- One task run per post with `ctx.run` and `asyncio.gather`, capped by a semaphore
+- Retries on the tasks that call OpenAI or download images; the fan-out task doesn't retry
+- Policy decisions and errors a retry can't fix (missing image, unknown model) returned as results
+- A conditional second step: only flagged posts get a reviewer note from a chat model
+
+[View Content Moderation Example →](./content-moderation/)

@@ -1,0 +1,34 @@
+[
+  {
+    "id": "post-101",
+    "author": "sample-user-1",
+    "text": "Just pulled my first sourdough loaf out of the oven. Crumb is a bit tight but I'm proud of it!",
+    "image_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c6/Sourdough_Bread_Loaf.jpg/960px-Sourdough_Bread_Loaf.jpg"
+  },
+  {
+    "id": "post-102",
+    "author": "sample-user-2",
+    "text": "That final boss absolutely destroyed me. Going back in tonight to take it down."
+  },
+  {
+    "id": "post-103",
+    "author": "sample-user-3",
+    "text": "Our dog's first trip to the farmers market. She made a lot of friends.",
+    "image_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/74/A_Golden_Retriever-9_%28Barras%29.JPG/960px-A_Golden_Retriever-9_%28Barras%29.JPG"
+  },
+  {
+    "id": "post-104",
+    "author": "sample-user-4",
+    "text": "Honestly this is the dumbest take I've read all week. Did you even think before posting?"
+  },
+  {
+    "id": "post-105",
+    "author": "sample-user-5",
+    "text": "If you post one more spoiler I swear I'll hunt you down, haha. Kidding, but please stop."
+  },
+  {
+    "id": "post-106",
+    "author": "sample-user-6",
+    "text": "Shut up, moron. Nobody asked for your stupid opinion."
+  }
+]
