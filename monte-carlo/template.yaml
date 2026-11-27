@@ -1,0 +1,27 @@
+# This file is used by `render workflows init` to scaffold new projects.
+# It tells the CLI how to display this template and what instructions to show
+# after scaffolding. You can safely ignore it when using this example directly.
+
+name: Monte Carlo
+description: Price an option with millions of simulated paths, fanned out across 8 CPU / 32 GB task runs
+
+workflowsRoot: .
+
+renderBuildCommand: pip install -r requirements.txt
+renderStartCommand: python main.py
+
+nextSteps:
+  - label: Enter your project directory
+    command: cd {{dir}}
+  - label: Start your local task server
+    command: render workflows dev -- {{startCommand}}
+    hint: This runs your workflow service locally, allowing you to view and run tasks without deploying to Render.
+  - label: Price the option locally (in another terminal)
+    command: render workflows tasks runs start price_option --local --input-file sample-input.json
+    hint: Simulates 2 million price paths in 4 chunks and returns the price with a 95% confidence interval. No keys needed. Locally, every chunk runs on your machine.
+  - label: Deploy to Render
+    hint: |
+      Push this code to a remote repository, then create a workflow service from your Render Dashboard with these build and start commands:
+      • Build command: {{renderBuildCommand}}
+      • Start command: {{renderStartCommand}}
+      No environment variables are required. Chunks run on the 8c-32g plan, which is billed per second.

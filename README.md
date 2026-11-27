@@ -22,6 +22,7 @@ Render Workflows support both Python and TypeScript. This repo contains Python e
 | [**File Processing**](./file-processing/) | Batch process multiple file formats in parallel | Parallel execution with `asyncio.gather()`, multi-format handling, aggregation | None |
 | [**Data Pipeline**](./data-pipeline/) | Multi-source customer analytics pipeline | Parallel extraction, data enrichment, combining parallel + sequential patterns | `httpx` |
 | [**File Analyzer**](./file-analyzer/) | API service calling workflow tasks for file analysis | Client SDK + Task SDK, workflow slugs, service separation, FastAPI integration | `fastapi`, `uvicorn` |
+| [**Monte Carlo**](./monte-carlo/) | Price an option with tens of millions of simulated paths | Fan-out across `8c-32g` task runs, a process pool per run, reproducible seeds, map-reduce with a confidence interval | `numpy` |
 
 ### 1. Hello World
 
@@ -98,3 +99,15 @@ Complete Client SDK + Task SDK integration — a file analysis API with separate
 The only example that shows both Task SDK and Client SDK together — ideal for understanding how to build APIs that call workflow tasks.
 
 [View File Analyzer Example →](./file-analyzer/)
+
+### 7. Monte Carlo
+
+Price an Asian call option by simulating tens of millions of price paths with numpy, fanned out across 8 CPU / 32 GB task runs.
+
+- The chunk task on `8c-32g`, using all 8 CPUs through a process pool; the orchestrator on `flex`
+- Reproducible seeds per block of paths, so a fanned-out run and a single run return the same price
+- Map-reduce over task runs into a price with a 95% confidence interval and a Black-Scholes check
+- Measured on Render: 50 million paths in 198 s on one `flex` run, 13.4 s across four `8c-32g` runs
+- Safe retries on the pure, deterministic chunk task; none on the fan-out
+
+[View Monte Carlo Example →](./monte-carlo/)
