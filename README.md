@@ -22,6 +22,7 @@ Render Workflows support both Python and TypeScript. This repo contains Python e
 | [**File Processing**](./file-processing/) | Batch process multiple file formats in parallel | Parallel execution with `asyncio.gather()`, multi-format handling, aggregation | None |
 | [**Data Pipeline**](./data-pipeline/) | Multi-source customer analytics pipeline | Parallel extraction, data enrichment, combining parallel + sequential patterns | `httpx` |
 | [**File Analyzer**](./file-analyzer/) | API service calling workflow tasks for file analysis | Client SDK + Task SDK, workflow slugs, service separation, FastAPI integration | `fastapi`, `uvicorn` |
+| [**Batch Enrichment**](./batch-enrichment/) | Enrich every row of a CSV through the OpenAI Batch API | Long wait on an external job on `flex`, idempotent submit, results joined back to rows, failed rows reported | `openai`, `pydantic` |
 
 ### 1. Hello World
 
@@ -98,3 +99,16 @@ Complete Client SDK + Task SDK integration — a file analysis API with separate
 The only example that shows both Task SDK and Client SDK together — ideal for understanding how to build APIs that call workflow tasks.
 
 [View File Analyzer Example →](./file-analyzer/)
+
+### 7. Batch Enrichment
+
+Enrich every row of a CSV (industry, size bucket, one-line summary) through the OpenAI Batch API, at half the price of normal API calls, and wait for it durably on Render.
+
+- Submit, wait and collect as separate tasks with their own retry policies
+- A 24-hour wait on the `flex` plan that sleeps between status checks
+- An idempotent submit: a retry or rerun reuses the batch instead of paying twice
+- Every answer validated and joined back to its row, with failed rows reported
+
+The README compares the sleep loop with "retry until done", with numbers measured on Render.
+
+[View Batch Enrichment Example →](./batch-enrichment/)
