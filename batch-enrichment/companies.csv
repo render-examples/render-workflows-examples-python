@@ -1,0 +1,13 @@
+id,company,website,description
+C-001,Northwind Robotics,northwind-robotics.example,"Builds autonomous forklifts and warehouse picking robots. Around 120 employees, offices in Ohio and Poland."
+C-002,Bluefin Payroll,bluefinpayroll.example,"Payroll and benefits software for restaurants. Seed-stage startup with a team of 9."
+C-003,Harbor & Pine Dental,harborpinedental.example,"Family dental practice with two clinics in Portland, Maine. 14 staff."
+C-004,Ledgerline,ledgerline.example,"Reconciliation API for fintech companies. Series B, about 340 people across three countries."
+C-005,Greenrow Farms,greenrowfarms.example,"Vertical farming company growing leafy greens for grocery chains. Roughly 60 employees."
+C-006,Atlas Freight Partners,atlasfreight.example,"Third-party logistics provider running 40 trucks and two cross-docks in Texas. About 450 employees."
+C-007,Quillbase,quillbase.example,"AI writing assistant for legal teams. Five founders and contractors."
+C-008,Meridian Health Labs,meridianlabs.example,"Clinical diagnostics lab network processing blood work for hospitals in the Midwest. 2,300 employees."
+C-009,Copperleaf Studio,copperleaf.example,"Independent game studio making cozy puzzle games for consoles. Team of 22."
+C-010,Solvent Energy,solventenergy.example,"Installs commercial rooftop solar and battery storage. Grew to 180 people last year."
+C-011,,unknown.example,"Row with no company name, to show input validation."
+C-012,Brightside Tutoring,brightsidetutoring.example,"Online tutoring marketplace connecting high schoolers with college tutors. 35 employees."
