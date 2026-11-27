@@ -1,0 +1,32 @@
+# This file is used by `render workflows init` to scaffold new projects.
+# It tells the CLI how to display this template and what instructions to show
+# after scaffolding. You can safely ignore it when using this example directly.
+
+name: Idempotent Side Effects
+description: Retry an LLM call without repeating a refund credit, using idempotency keys and Postgres
+
+workflowsRoot: .
+
+renderBuildCommand: pip install -r requirements.txt
+renderStartCommand: python main.py
+
+nextSteps:
+  - label: Enter your project directory
+    command: cd {{dir}}
+  - label: Create a local database
+    command: createdb idempotent_side_effects
+    hint: Needs a local Postgres. The workflow creates its table on first use.
+  - label: Add your settings
+    command: cp .env.example .env
+    hint: Then set OPENAI_API_KEY and DATABASE_URL in .env. The local task server loads .env when it starts, so do this first.
+  - label: Start your local task server
+    command: render workflows dev -- {{startCommand}}
+    hint: This runs your workflow service locally, allowing you to view and run tasks without deploying to Render.
+  - label: Refund a ticket, failing once after the credit (in another terminal)
+    command: render workflows tasks runs start handle_refund --local --input-file refund-fail-once.json
+    hint: refund-fail-once.json holds a ticket and true, which fails issue_credit once, right after it writes the credit. Render retries it, the retry finds the credit, and the result shows status already_issued with credits_for_order 1.
+  - label: Deploy to Render with a database
+    hint: |
+      Push this code to a Git repository, then create two resources in the Render Dashboard, in the same region:
+      • A Postgres database.
+      • A workflow service. Build command: {{renderBuildCommand}}. Start command: {{renderStartCommand}}. Environment: DATABASE_URL (the database's internal URL), OPENAI_API_KEY.
