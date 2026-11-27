@@ -22,6 +22,7 @@ Render Workflows support both Python and TypeScript. This repo contains Python e
 | [**File Processing**](./file-processing/) | Batch process multiple file formats in parallel | Parallel execution with `asyncio.gather()`, multi-format handling, aggregation | None |
 | [**Data Pipeline**](./data-pipeline/) | Multi-source customer analytics pipeline | Parallel extraction, data enrichment, combining parallel + sequential patterns | `httpx` |
 | [**File Analyzer**](./file-analyzer/) | API service calling workflow tasks for file analysis | Client SDK + Task SDK, workflow slugs, service separation, FastAPI integration | `fastapi`, `uvicorn` |
+| [**Web Service API**](./web-service-api/) | The smallest correct web service in front of a workflow | Start a task from an API and return 202, idempotency keys, read status and result by run ID, 400 for bad input | `fastapi`, `uvicorn` |
 
 ### 1. Hello World
 
@@ -98,3 +99,14 @@ Complete Client SDK + Task SDK integration — a file analysis API with separate
 The only example that shows both Task SDK and Client SDK together — ideal for understanding how to build APIs that call workflow tasks.
 
 [View File Analyzer Example →](./file-analyzer/)
+
+### 7. Web Service API
+
+The smallest correct way to put a web service in front of a workflow: a FastAPI service starts a task and reports its status. The task builds a report from bundled data, so it needs no API keys.
+
+- `POST /jobs` starts the task with a client-supplied idempotency key and returns 202 with the run ID
+- `GET /jobs/{run_id}` returns the run's status and result, or 404
+- Bad input gets a 400 and never becomes a task run
+- No database: Render keeps results for 30 days
+
+[View Web Service API Example →](./web-service-api/)
